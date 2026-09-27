@@ -2,7 +2,7 @@
 
 急診兒科使用的靜態網頁，輸入體重與年齡後換算 mg、mL 或劑型數量。本工具不會自動還原上一位病人的體重與年齡；供應狀態、禁忌與快捷劑量為不同層次資訊。
 
-**Live**：[https://xyzKIWI.github.io/peds-dose/](https://xyzKIWI.github.io/peds-dose/)
+**Live**：[https://xyzKIWI.github.io/peds/](https://xyzKIWI.github.io/peds/)
 
 ## 本機開啟
 
