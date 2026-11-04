@@ -139,7 +139,7 @@ describe('PALS／SE 頁面（瀏覽器，20 kg）', { skip: playwright ? false :
       // 舊 Midatin 為缺藥：只顯示供應狀態文字，不顯示劑量
       { name: 'Midazolam', dose: `${drug('midazolam_midatin_5mg_shortage').availability.label} 不顯示院內快捷劑量` },
       { name: 'Lorazepam', dose: '2 mg (1 mL)' },
-      { name: 'Diazepam', dose: '4-6 mg (0.8-1.2 mL)' },
+      { name: 'Diazepam', dose: '3-4 mg (0.6-0.8 mL)' },   // 0.15-0.2 mg/kg（AES）
       { name: 'Diazepam', dose: '10 mg (2.5 mL)' },
       { name: 'Phenobarbital', dose: '300 mg (3 mL)' }
     ]);

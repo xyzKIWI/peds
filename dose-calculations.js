@@ -167,7 +167,19 @@
     if (t === 'weight_band') {
       if (weight == null) return { needs_weight: true };
       if (!validWeight(weight)) return { invalid_weight: true };
-      const band = calc.bands.find(b => weight >= b.weight_low && weight < b.weight_high);
+      // 嬰兒另有 mg/kg 規則（如 Tamiflu 2 週至未滿 1 歲 3 mg/kg）時，必須先知道年齡
+      if (calc.infant_rule) {
+        if (age == null) return { needs_age: true };
+        if (!validAgeYears(age)) return { invalid_age: true };
+        if (age < calc.infant_rule.age_below_years) {
+          const mg = calc.infant_rule.mg_per_kg_per_dose * weight;
+          return { type: 'dose', mgRange: [mg, mg], rule: calc.infant_rule.label };
+        }
+      }
+      // upper_inclusive：仿單寫「15 kg or less / 15.1 kg to 23 kg」時，分組為 low < 體重 ≤ high
+      const band = calc.upper_inclusive
+        ? calc.bands.find(b => weight > b.weight_low && weight <= b.weight_high)
+        : calc.bands.find(b => weight >= b.weight_low && weight < b.weight_high);
       return { type: 'band', bandText: band ? band.dose : '無相符區間', rule: '依體重分組' };
     }
 

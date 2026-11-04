@@ -131,16 +131,41 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     await context.close();
   });
 
-  test('Taita 4-2-1 rule 卡片應顯示 mL/hr 數字（目前顯示 undefined）', { todo: '計算層 fluid_421_rule 沒有回傳 display，畫面印出 undefined，見 TEST_REPORT.md' }, async () => {
+  test('Taita 4-2-1 rule 卡片顯示 mL/hr 數字（2026-11-04 修正前顯示 undefined）', async () => {
     const { page, context } = await openPage(browser);
-    try {
-      await setWeight(page, 15);
-      await page.fill('#search', 'taita');
-      const text = await page.locator('#drug-list').innerText();
-      assert.doesNotMatch(text, /undefined/);
-      assert.match(text, /50 mL\/hr/);
-    } finally {
-      await context.close();
-    }
+    await setWeight(page, 15);
+    await page.fill('#search', 'taita');
+    const text = await page.locator('#drug-list').innerText();
+    assert.doesNotMatch(text, /undefined/);
+    // 15 kg：40 + 5 × 2 = 50 mL/hr，三張卡都一樣
+    assert.equal(text.match(/50 mL\/hr/g)?.length, 3);
+    await setWeight(page, 120);
+    assert.match(await page.locator('#drug-list').innerText(), /160 mL\/hr/);
+    await context.close();
+  });
+
+  test('Tamiflu：沒輸入年齡 → 要求年齡；6 個月 6 kg → 18 mg；5 歲 15 kg → 30 mg', async () => {
+    const { page, context } = await openPage(browser);
+    await setWeight(page, 6);
+    const card = page.locator('.drug-card[data-id="tamiflu"]');
+    assert.match(await card.innerText(), /輸入年齡後計算/);
+    await setAge(page, 6, 'months');
+    assert.match(await card.innerText(), /3 mg\/kg BID[\s\S]*18\s*mg/);
+    await setWeight(page, 15);
+    await setAge(page, 5);
+    assert.match(await card.innerText(), /30 mg BID × 5 days/);
+    await context.close();
+  });
+
+  test('Xofluza：4 歲顯示「不建議」；5 歲不顯示', async () => {
+    const { page, context } = await openPage(browser);
+    await setWeight(page, 18);
+    const card = page.locator('.drug-card[data-id="xofluza_tab"]');
+    await setAge(page, 4);
+    assert.match(await card.innerText(), /不建議[\s\S]*< 5 歲/);
+    await setAge(page, 5);
+    assert.doesNotMatch(await card.innerText(), /< 5 歲不在 FDA 仿單/);
+    assert.match(await card.innerText(), /≥5 歲 \+ <20 kg/);
+    await context.close();
   });
 });

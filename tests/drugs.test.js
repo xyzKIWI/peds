@@ -318,27 +318,44 @@ for (const [id, key, perUnit, src] of [
 
 // ---------------------------------------------------------------- 流感
 drugSuite('tamiflu', () => {
-  test('出處範例 [FDA-Tamiflu] 12 kg（≤ 15 kg）→ 30 mg BID', () => {
-    assert.match(dose('tamiflu', 12).bandText, /^30 mg BID/);
+  // 已依 FDA 仿單修正（2026-11-04）：分組改為「low < 體重 ≤ high」，並加上 2 週至未滿 1 歲 3 mg/kg BID
+  const band = (w, age = 5) => dose('tamiflu', w, age).bandText;
+  test('出處範例 [FDA-Tamiflu] 5 歲 12 kg（15 kg or less）→ 30 mg BID', () => {
+    assert.match(band(12), /^30 mg BID/);
   });
-  test('[FDA-Tamiflu] 15.1-23 kg → 45 mg、23.1-40 kg → 60 mg、≥ 40.1 kg → 75 mg（非整數邊界一致）', () => {
-    assert.match(dose('tamiflu', 15.1).bandText, /^45 mg/);
-    assert.match(dose('tamiflu', 23.1).bandText, /^60 mg/);
-    assert.match(dose('tamiflu', 40.1).bandText, /^75 mg/);
-    assert.match(dose('tamiflu', 3).bandText, /^30 mg/);
-    assert.match(dose('tamiflu', 120).bandText, /^75 mg/);
+  test('[FDA-Tamiflu] 剛好 15 kg → 30 mg；15.1 kg → 45 mg', () => {
+    assert.match(band(15), /^30 mg/);
+    assert.match(band(15.1), /^45 mg/);
   });
-  test('[FDA-Tamiflu]「15 kg or less」= 30 mg；工具在剛好 15 kg 給 45 mg', { todo: '與 FDA 仿單邊界不一致，見 TEST_REPORT.md' }, () => {
-    assert.match(dose('tamiflu', 15).bandText, /^30 mg/);
+  test('[FDA-Tamiflu] 剛好 23 kg → 45 mg；23.1 kg → 60 mg', () => {
+    assert.match(band(23), /^45 mg/);
+    assert.match(band(23.1), /^60 mg/);
   });
-  test('[FDA-Tamiflu]「15.1 kg to 23 kg」= 45 mg；工具在剛好 23 kg 給 60 mg', { todo: '與 FDA 仿單邊界不一致，見 TEST_REPORT.md' }, () => {
-    assert.match(dose('tamiflu', 23).bandText, /^45 mg/);
+  test('[FDA-Tamiflu] 剛好 40 kg → 60 mg；40.1 kg → 75 mg；120 kg → 75 mg', () => {
+    assert.match(band(40), /^60 mg/);
+    assert.match(band(40.1), /^75 mg/);
+    assert.match(band(120), /^75 mg/);
   });
-  test('[FDA-Tamiflu]「23.1 kg to 40 kg」= 60 mg；工具在剛好 40 kg 給 75 mg', { todo: '與 FDA 仿單邊界不一致，見 TEST_REPORT.md' }, () => {
-    assert.match(dose('tamiflu', 40).bandText, /^60 mg/);
+  test('1 歲 3 kg → 30 mg（≥ 1 歲依體重分組）', () => {
+    assert.match(band(3, 1), /^30 mg/);
   });
-  test('[FDA-Tamiflu] 2 週至未滿 1 歲為 3 mg/kg BID；工具只看體重，6 kg 嬰兒顯示 30 mg', { todo: '仿單有年齡分層，工具未實作，見 TEST_REPORT.md' }, () => {
-    assert.doesNotMatch(dose('tamiflu', 6, 0.5).bandText, /^30 mg/);
+  test('[FDA-Tamiflu] 2 週至未滿 1 歲：3 mg/kg BID — 6 個月 6 kg = 18 mg；0.99 歲 9 kg = 27 mg', () => {
+    const r = dose('tamiflu', 6, 0.5);
+    range(r.mgRange, [18, 18], '6 kg');
+    assert.match(r.rule, /3 mg\/kg BID/);
+    range(dose('tamiflu', 9, 0.99).mgRange, [27, 27], '0.99 歲');
+    range(dose('tamiflu', 3, 0).mgRange, [9, 9], '3 kg 新生兒');
+  });
+  test('嬰兒規則需要年齡：缺年齡 → needs_age；年齡 -1 或 19 → invalid_age；缺體重仍先要求體重', () => {
+    assert.deepEqual(dose('tamiflu', 12, null), { needs_age: true });
+    assert.deepEqual(dose('tamiflu', 12, -1), { invalid_age: true });
+    assert.deepEqual(dose('tamiflu', 12, 19), { invalid_age: true });
+    assert.deepEqual(dose('tamiflu', null, 5), { needs_weight: true });
+  });
+  test('嬰兒 3 mg/kg 沒有封頂、也沒有換算懸液 mL（資料無 concentration_mg_per_ml）', () => {
+    const r = dose('tamiflu', 12, 0.9);
+    range(r.mgRange, [36, 36], '12 kg 嬰兒');
+    assert.equal(r.mlRange, undefined);
   });
 });
 
@@ -366,8 +383,13 @@ drugSuite('xofluza_tab', () => {
   test('< 20 kg 只顯示「2 mg/kg」文字，沒有算出 mg', () => {
     assert.equal(dose('xofluza_tab', 15).mgRange, undefined);
   });
-  test('[FDA-Xofluza] 仿單適用 ≥ 5 歲；工具文字寫「≥1 歲」、禁忌設 < 12 個月', { todo: '與 FDA 仿單年齡下限不同（工具出處為 Lexicomp + 高醫藥品庫），見 TEST_REPORT.md' }, () => {
-    assert.ok(drug('xofluza_tab').contraindications.some(c => c.type === 'age_below_years' && c.threshold_years === 5));
+  test('[FDA-Xofluza] 仿單適用 ≥ 5 歲：禁忌設 < 5 歲「不建議」；分組、notes、藥品資料文字都寫 ≥5 歲（2026-11-04 修正）', () => {
+    const d = drug('xofluza_tab');
+    assert.ok(d.contraindications.some(c => c.type === 'age_below_years' && c.threshold_years === 5 && c.severity === '不建議'));
+    assert.match(d.calc.bands[0].dose, /^≥5 歲/);
+    assert.match(d.notes, /^≥5 歲/);
+    assert.match(d.kmuh_detail['警語'], /^≥5 歲/);
+    assert.doesNotMatch(JSON.stringify(d), /≥1 歲/);
   });
 });
 
@@ -509,9 +531,6 @@ for (const id of ['taita1', 'taita2', 'taita5']) {
     test('120 kg → 160 mL/hr — 無封頂（記錄現況，列入報告）', () => {
       close(dose(id, 120).rate, 160, '120 kg');
     });
-    test('計算層沒有回傳畫面要用的 display 字串（畫面顯示 undefined，見 page.test.js 與報告）', () => {
-      assert.equal(dose(id, 15).display, undefined);
-    });
   });
 }
 
@@ -643,18 +662,19 @@ drugSuite('lorazepam_inj', () => {
 });
 
 drugSuite('diazepam_iv', () => {
-  test('工具 [JSON Lexicomp] 10 kg：0.2-0.3 mg/kg = 2-3 mg = 0.4-0.6 mL（5 mg/mL）', () => {
+  // 已依 AES 2016 修正（2026-11-04）：0.2-0.3 → 0.15-0.2 mg/kg，max 10 mg 不變
+  test('出處範例 [AES] IV diazepam 0.15-0.2 mg/kg/dose, max 10 mg：10 kg = 1.5-2 mg = 0.3-0.4 mL（5 mg/mL）', () => {
     const r = dose('diazepam_iv', 10);
-    range(r.mgRange, [2, 3], 'mg');
-    range(r.mlRange, [0.4, 0.6], 'mL');
+    range(r.mgRange, [1.5, 2], 'mg');
+    range(r.mlRange, [0.3, 0.4], 'mL');
   });
-  test('3 kg → 0.6-0.9 mg；40 kg → 8-10 mg（高值封頂）；50 kg → 10-10 mg', () => {
-    range(dose('diazepam_iv', 3).mgRange, [0.6, 0.9], '3 kg');
-    range(dose('diazepam_iv', 40).mgRange, [8, 10], '40 kg');
-    range(dose('diazepam_iv', 50).mgRange, [10, 10], '50 kg');
+  test('[AES] 3 kg → 0.45-0.6 mg；50 kg → 7.5-10 mg（高值剛好封頂）；70 kg → 10-10 mg = 2 mL', () => {
+    range(dose('diazepam_iv', 3).mgRange, [0.45, 0.6], '3 kg');
+    range(dose('diazepam_iv', 50).mgRange, [7.5, 10], '50 kg');
+    range(dose('diazepam_iv', 70).mlRange, [2, 2], '70 kg');
   });
-  test('[AES] IV diazepam 0.15-0.2 mg/kg/dose, max 10 mg：10 kg 應為 1.5-2 mg', { todo: 'SE 流程頁引用 AES 2016，但藥卡 mg/kg 為 0.2-0.3，見 TEST_REPORT.md' }, () => {
-    range(dose('diazepam_iv', 10).mgRange, [1.5, 2], 'mg');
+  test('藥卡與 SE 流程文字一致（se_algorithm 第一線寫 0.15–0.2 mg/kg）', () => {
+    assert.ok(data.se_algorithm.time_stages[1].actions.some(a => a.includes('IV Diazepam：0.15–0.2 mg/kg')));
   });
 });
 

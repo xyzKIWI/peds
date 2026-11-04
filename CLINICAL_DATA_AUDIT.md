@@ -28,3 +28,14 @@
 - Acetaminophen、Ibuprofen、Curam 與第二批藥品仍需逐項核對岡山院內規格與現行 protocol。
 
 此記錄無病人識別資料。「快捷預設」與「可查閱參考範圍」已分開，未確認項目不轉成一鍵給藥結果。
+
+## 2026-11-04 依出處修正（Kiwi 確認）
+
+驗算測試（`TEST_REPORT.md`）發現與出處不一致，經 Kiwi 確認後修正：
+
+- **Tamiflu**：依 FDA 仿單 Table 1，體重分組改為「15 kg or less／15.1-23／23.1-40／40.1 kg or more」（資料加 `upper_inclusive`）；2 週至未滿 1 歲改為 3 mg/kg BID（資料加 `infant_rule`），因此需先輸入年齡。
+- **Xofluza**：依 FDA 仿單（2025）適用 ≥ 5 歲；分組文字、notes、警語由「≥1 歲」改為「≥5 歲」，禁忌由 < 12 個月改為 < 5 歲「不建議」。
+- **Diazepam IV**：依 AES 2016（SE 頁引用的流程圖）由 0.2-0.3 mg/kg 改為 0.15-0.2 mg/kg，max 10 mg 不變。
+- **Taita 4-2-1 rule**：畫面原本顯示 `undefined`，改為顯示 mL/hr（程式修正，未改數值）。
+
+待確認：Tamiflu `package` 寫「60 mg/mL susp」，FDA 仿單懸液為 6 mg/mL；目前未用於計算，未修改。

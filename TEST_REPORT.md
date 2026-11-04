@@ -4,19 +4,20 @@
 範圍：`dose-calculations.js`、`peds_drugs.json`（68 個藥物）、`index.html` 的 PALS／SE 流程與頁尾
 執行方式：`node --test`（GitHub Actions：`.github/workflows/test.yml`，push 與 PR 時自動跑）
 
-> 本報告只記錄測試結果，**沒有修改任何劑量、濃度、上限、間隔、情境預設值或臨床文字**。
-> 下面列出的「不一致」與「可疑」項目都要由 Kiwi 判斷是否需要改；測試裡以 `todo` 標記，CI 仍然是綠的。
+> 第一版報告只記錄測試結果、沒有改任何臨床數值。
+> 2026-11-04 Kiwi 確認後，第 4 節的 5 項已依出處修正（Tamiflu、Xofluza、Diazepam IV、Taita 顯示），對應測試由 `todo` 改為一般測試。
+> 第 5 節的「可疑」項目仍未修改，需要 Kiwi 判斷。
 
 ## 總覽
 
 | 檔案 | 內容 | 結果 |
 | --- | --- | --- |
 | `tests/calculations.test.js` | 原有測試（Ketamine、Acetaminophen、Ibuprofen、輸入邊界），未改動 | 通過 |
-| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點；另有覆蓋率檢查 | 179 通過、6 todo |
+| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點；另有覆蓋率檢查 | 184 通過 |
 | `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；畫面數字取整 `num()` | 82 通過 |
-| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態 | 13 通過、1 todo |
+| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面 | 16 通過 |
 | `tests/flows.test.js` | PALS 三個流程與 SE 四個階段：順序與 20 kg、3 kg、120 kg 劑量和頁面一致 | 16 通過 |
-| **合計** | | **298 項：291 通過、7 todo、0 失敗** |
+| **合計** | | **299 項：299 通過、0 todo、0 失敗** |
 
 頁面測試需要 Playwright。CI 會臨時安裝（`--no-save`，repo 不新增依賴）；本機沒裝時頁面測試會自動 skip，計算測試照跑。
 
@@ -55,13 +56,15 @@
 | 電擊能量 | PALS | 去顫 2 → 4 → ≥ 4 J/kg；同步電擊 0.5-1 → 2 J/kg；順序一致 |
 | PALS 藥物順序 | PALS | Arrest：epinephrine → amiodarone／lidocaine；Brady：epinephrine → atropine；Tachy：adenosine |
 | Lorazepam | AES | 0.1 mg/kg、max 4 mg：40 kg 起封頂 4 mg = 2 mL |
+| Diazepam IV（已修正） | AES | 0.15-0.2 mg/kg、max 10 mg：10 kg 1.5-2 mg = 0.3-0.4 mL，50 kg 起高值封頂 |
 | Diazepam PR | AES | AES 0.2-0.5 mg/kg、max 20 mg；工具取上限 0.5 mg/kg，40 kg 起封頂 20 mg |
 | Levetiracetam IV | AES | 60 mg/kg、max 4500 mg：75 kg 起封頂，80 kg = 45 mL = 9 Vial |
 | Valproate IV | AES | 40 mg/kg、max 3000 mg：75 kg 起封頂，80 kg = 30 mL = 7.5 vial |
 | Phenobarbital IV | AES | 15 mg/kg：10 kg 150 mg = 1.5 mL |
 | SE 階段順序 | AES | 0–5 → 5–20 → 20–40 → 40–60 min；第二線 phenytoin → valproate → levetiracetam → 備案 phenobarbital |
-| Tamiflu（非整數邊界） | FDA-Tamiflu | 12 kg 30 mg、15.1 kg 45 mg、23.1 kg 60 mg、40.1 kg 75 mg |
+| Tamiflu（已修正） | FDA-Tamiflu | 剛好 15／23／40 kg → 30／45／60 mg；15.1／23.1／40.1 kg → 45／60／75 mg；未滿 1 歲 3 mg/kg BID |
 | Xofluza 體重分組 | FDA-Xofluza | < 20 kg 2 mg/kg、20 至 < 80 kg 40 mg、≥ 80 kg 80 mg，邊界一致 |
+| Xofluza 年齡（已修正） | FDA-Xofluza | ≥ 5 歲；< 5 歲顯示「不建議」 |
 
 ### 3.2 算術驗證通過（出處為 JSON 來源欄）
 
@@ -76,29 +79,33 @@
 - 供應狀態非 available 的品項（Thiopental、Chloral hydrate、舊 Midatin）不顯示快捷數字。
 - 頁尾：免責聲明與 `_meta.disclaimer` 一字不差；來源與 `_meta.primary_source`、`se_algorithm.citation` 一致；保留校對日；回入口連結在 er.kiwi-ai.uk 為 `../`、在 github.io 為 `/ed-tools/`；14 個分頁在 375 px 與 1280 px 都沒有水平捲動。
 
-## 4. 和出處不一致的地方（測試標記為 `todo`）
+## 4. 和出處不一致的地方（2026-11-04 已修正）
 
-| # | 藥物 | 輸入 | 預期（出處） | 實際（工具） | 出處 |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Tamiflu | 15 kg | 30 mg BID（「15 kg or less」） | 45 mg BID | FDA-Tamiflu |
-| 2 | Tamiflu | 23 kg | 45 mg BID（「15.1 kg to 23 kg」） | 60 mg BID | FDA-Tamiflu |
-| 3 | Tamiflu | 40 kg | 60 mg BID（「23.1 kg to 40 kg」） | 75 mg BID | FDA-Tamiflu |
-| 4 | Tamiflu | 6 kg、6 個月 | 2 週至未滿 1 歲：3 mg/kg BID（= 18 mg） | 只看體重，顯示 30 mg BID | FDA-Tamiflu |
-| 5 | Xofluza | 年齡下限 | 仿單適用 ≥ 5 歲 | 分組文字寫「≥1 歲」，禁忌設 < 12 個月「不建議」 | FDA-Xofluza |
-| 6 | Diazepam IV | 10 kg | 0.15-0.2 mg/kg → 1.5-2 mg | 0.2-0.3 mg/kg → 2-3 mg | AES（SE 頁引用的就是這份） |
-| 7 | Taita 1／2／5 號 | 15 kg | 顯示 50 mL/hr（4-2-1 rule 算出來的數字） | 畫面顯示 `undefined` | 程式問題，不是出處差異（見 5.1） |
+第一版報告列出的 7 個 `todo` 已依出處修正，測試改為一般測試並全部通過。
 
-說明：
+| # | 藥物 | 輸入 | 修正前 | 修正後（= 出處） | 出處 | 改了什麼 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Tamiflu | 15 kg | 45 mg BID | 30 mg BID | FDA-Tamiflu「15 kg or less」 | `calc.upper_inclusive: true`：分組改為 low < 體重 ≤ high |
+| 2 | Tamiflu | 23 kg | 60 mg BID | 45 mg BID | FDA-Tamiflu「15.1 kg to 23 kg」 | 同上 |
+| 3 | Tamiflu | 40 kg | 75 mg BID | 60 mg BID | FDA-Tamiflu「23.1 kg to 40 kg」 | 同上 |
+| 4 | Tamiflu | 6 kg、6 個月 | 30 mg BID | 3 mg/kg BID = 18 mg | FDA-Tamiflu「2 Weeks to less than 1 Year」 | `calc.infant_rule`：< 1 歲改用 3 mg/kg |
+| 5 | Xofluza | 年齡下限 | 「≥1 歲」、< 12 個月不建議 | 「≥5 歲」、< 5 歲不建議 | FDA-Xofluza | 分組文字、notes、藥品資料警語、禁忌一起改 |
+| 6 | Diazepam IV | 10 kg | 0.2-0.3 mg/kg = 2-3 mg | 0.15-0.2 mg/kg = 1.5-2 mg | AES（SE 頁原本的流程文字就寫 0.15–0.2） | `calc.low/high`；max 10 mg 不變 |
+| 7 | Taita 1／2／5 號 | 15 kg | 畫面顯示 `undefined` | 50 mL/hr | 程式問題 | 畫面改用 `num(rate) + " mL/hr"`，格式與舊版內嵌 `calcDose` 相同 |
 
-- 第 1-3 項：工具的分組是「下限含、上限不含」（`weight >= low && weight < high`），剛好落在 15、23、40 kg 時會跳到下一組；FDA 仿單是「上限含」。工具的出處欄寫的是 Lexicomp／台灣兒科醫學會，那兩份我沒拿到原文，無法確認是否本來就不同。
-- 第 5 項：工具出處為 Lexicomp + 高醫藥品庫，台灣仿單年齡下限可能和美國不同；我只拿到美國仿單。
-- 第 6 項：藥卡的出處欄是 Lexicomp，但 SE 流程頁引用 AES 2016 並使用同一張藥卡。
+修正後的行為變化，請留意：
+
+- **Tamiflu 現在需要先輸入年齡**才會顯示劑量（沒輸入年齡時顯示「輸入年齡後計算」），因為未滿 1 歲的劑量不同。
+- Tamiflu 未滿 1 歲只算出 mg，沒有上限，也沒有換算懸液 mL（資料沒有懸液濃度，見 5.4）。
+- 15 與 15.1 kg 之間（例如 15.05 kg）FDA 表沒有寫；工具歸到 > 15 kg 那組（45 mg）。23、40 kg 附近同理。
+- `peds_drugs.json` 的 `source` 欄已補上：Tamiflu「FDA Tamiflu 仿單 Table 1」、Xofluza「FDA Xofluza 仿單（2025）」、Diazepam IV「AES 2016」。
+- `ml_by_weight_after_dilution` 同樣只回傳數字，畫面也一併改成沿用舊版文字格式（目前沒有藥物用到）。
 
 ## 5. 缺少封頂或邊界可疑的地方（測試記錄現況，未標 todo）
 
 ### 5.1 程式／顯示問題
 
-1. **Taita 4-2-1 rule 顯示 `undefined`**：頁面在 `index.html` 用 `PedsDoseCalc.calculateDose` 取代內嵌的 `calcDose`，但 `fluid_421_rule` 只回傳 `rate`，沒有畫面要用的 `display`，所以三張 Taita 卡片都印出 `undefined`。目前線上版就是這樣。（`ml_by_weight_after_dilution` 也有同樣問題，但現在沒有藥物用到。）
+1. ~~Taita 4-2-1 rule 顯示 `undefined`~~：已修正，見第 4 節。
 2. **`index.html` 內嵌一份舊的 `calcDose`**（約 190 行），已被 `dose-calculations.js` 取代、不會執行，但留著容易讓人改錯地方。
 3. **體重輸入框 `max="100"`**，但 JS 和計算層接受到 120 kg，兩邊不一致。
 4. **畫面數字兩位小數**：< 0.005 會顯示成「0」（只有 < 0.5 kg 才會遇到）；Ketamine 6 kg 開藥量 0.048 Vial 顯示成「0.05 Vial」。
@@ -130,6 +137,7 @@
 - **MgO 年齡分組有縫隙**：5-6 歲、11-12 歲顯示「無相符區間」（分組是 0-2、2-5、6-11、12 以上）。
 - **LGG 沒有 < 3 歲的分組**：顯示「無相符區間」。
 - 只顯示公式文字、沒有算出數字：Xofluza < 20 kg（「2 mg/kg」）、MgO < 2 歲（「BW÷20 #」）、Tamiflu 沒有換算懸液 mL。
+- **Tamiflu 懸液濃度**：資料 `package` 寫「60 mg/mL susp」，FDA 仿單的懸液是 6 mg/mL（Table 1：30 mg = 5 mL）。目前沒有用這個數字計算 mL，所以不影響畫面劑量，但文字可能有誤，請確認院內品項。（未修改）
 - Diazepam PR 固定用 4 mg/mL（10 mg/2.5 mL 管）換算；資料備註另有 5 mg/2.5 mL 管（2 mg/mL），用那種管時 mL 會差 2 倍。
 - Cetirizine ≥ 3 歲固定劑量時，計算層不檢查體重（輸入框會先擋掉，不影響畫面）。
 
@@ -150,5 +158,5 @@
 - 腸胃：Aswell、Promeran、Primperan、Novamin、Kascoal、LGG、MgO、Glycerin、Smecta
 - 點滴：Taita 1／2／5 號
 - 鎮靜止痛／RSI：Morphine、Fentanyl、Succinylcholine、Ketamine（RCH／RCEM 原文未取得）、Diphenhydramine 錠／針
-- 抽搐：Diazepam IV 的 Lexicomp 劑量、Levetiracetam 糖漿／錠、Valproate 糖漿／錠、Phenytoin（AES 只寫 fosphenytoin）
+- 抽搐：Levetiracetam 糖漿／錠、Valproate 糖漿／錠、Phenytoin（AES 只寫 fosphenytoin）
 - 沒有快捷計算、只測供應狀態／方案設定：Midazolam 2MID50、舊 Midatin 2MIDAT、Thiopental、Chloral hydrate

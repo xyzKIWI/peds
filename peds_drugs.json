@@ -831,6 +831,12 @@
       "route": "PO",
       "calc": {
         "type": "weight_band",
+        "upper_inclusive": true,
+        "infant_rule": {
+          "age_below_years": 1,
+          "mg_per_kg_per_dose": 3,
+          "label": "2 週至未滿 1 歲：3 mg/kg BID × 5 days"
+        },
         "bands": [
           {
             "weight_low": 0,
@@ -856,7 +862,7 @@
       },
       "frequency": "BID × 5 days",
       "notes": "症狀 48 小時內開始最有效；參考台灣兒科醫學會抗病毒藥物使用建議",
-      "source": "Lexicomp / Taiwan Pediatric Society",
+      "source": "Lexicomp / Taiwan Pediatric Society + FDA Tamiflu 仿單 Table 1",
       "tags": [
         "common",
         "flu",
@@ -941,7 +947,7 @@
           {
             "weight_low": 0,
             "weight_high": 20,
-            "dose": "≥1 歲 + <20 kg：2 mg/kg PO single dose"
+            "dose": "≥5 歲 + <20 kg：2 mg/kg PO single dose"
           },
           {
             "weight_low": 20,
@@ -956,27 +962,27 @@
         ]
       },
       "frequency": "Single dose × 1",
-      "notes": "≥1 歲適用；單次口服即可（療程結束）；勿與 dairy/calcium 同服（吸收下降）",
+      "notes": "≥5 歲適用；單次口服即可（療程結束）；勿與 dairy/calcium 同服（吸收下降）",
       "warnings": [
         "症狀 48 小時內服用最有效"
       ],
-      "source": "Lexicomp + 高醫藥品庫",
+      "source": "Lexicomp + 高醫藥品庫 + FDA Xofluza 仿單（2025）",
       "tags": [
         "flu"
       ],
       "contraindications": [
         {
-          "type": "age_below_months",
-          "threshold_months": 12,
+          "type": "age_below_years",
+          "threshold_years": 5,
           "severity": "不建議",
-          "reason": "< 1 歲安全性資料不足"
+          "reason": "< 5 歲不在 FDA 仿單適用範圍（仿單：≥ 5 歲）"
         }
       ],
       "kmuh_detail": {
         "臨床用途": "Influenza A/B 治療（單次口服）",
         "禁忌": "Baloxavir 過敏",
         "副作用": "腹瀉、頭痛（少見）",
-        "警語": "≥1 歲適用；勿與含鈣 / 鎂 / 鐵製品併服（吸收↓）",
+        "警語": "≥5 歲適用；勿與含鈣 / 鎂 / 鐵製品併服（吸收↓）",
         "懷孕分級": "—（資料不足）",
         "授乳": "資料不足",
         "管制性藥品": "—"
@@ -2023,13 +2029,13 @@
       "route": "IV",
       "calc": {
         "type": "mg_per_kg_per_dose",
-        "low": 0.2,
-        "high": 0.3,
+        "low": 0.15,
+        "high": 0.2,
         "max_dose_mg": 10
       },
       "frequency": "Slow IV push (over 2-3 min)，5 min 可 repeat",
       "notes": "Status epilepticus 替代藥（首選 lorazepam）",
-      "source": "Lexicomp",
+      "source": "Lexicomp + AES 2016",
       "tags": [],
       "group_id": "diazepam",
       "kmuh_detail": {
