@@ -38,4 +38,4 @@
 - **Diazepam IV**：依 AES 2016（SE 頁引用的流程圖）由 0.2-0.3 mg/kg 改為 0.15-0.2 mg/kg，max 10 mg 不變。
 - **Taita 4-2-1 rule**：畫面原本顯示 `undefined`，改為顯示 mL/hr（程式修正，未改數值）。
 
-待確認：Tamiflu `package` 寫「60 mg/mL susp」，FDA 仿單懸液為 6 mg/mL；目前未用於計算，未修改。
+- **Tamiflu 懸液濃度文字**：`package` 由「60 mg/mL susp」改為「6 mg/mL susp」（FDA 仿單 Table 1：30 mg = 5 mL）。只用於顯示，不參與計算。

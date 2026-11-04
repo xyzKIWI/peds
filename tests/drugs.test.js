@@ -352,6 +352,10 @@ drugSuite('tamiflu', () => {
     assert.deepEqual(dose('tamiflu', 12, 19), { invalid_age: true });
     assert.deepEqual(dose('tamiflu', null, 5), { needs_weight: true });
   });
+  test('[FDA-Tamiflu] 懸液濃度文字為 6 mg/mL（仿單 Table 1：30 mg = 5 mL；2026-11-04 由「60 mg/mL」修正）', () => {
+    assert.match(drug('tamiflu').package, /(^|\D)6 mg\/mL susp/);
+    assert.doesNotMatch(drug('tamiflu').package, /60 mg\/mL/);
+  });
   test('嬰兒 3 mg/kg 沒有封頂、也沒有換算懸液 mL（資料無 concentration_mg_per_ml）', () => {
     const r = dose('tamiflu', 12, 0.9);
     range(r.mgRange, [36, 36], '12 kg 嬰兒');
