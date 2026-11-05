@@ -406,6 +406,7 @@ button.export-btn {
   text-decoration: none;
 }
 .back-home:hover { text-decoration: underline; }
+.top-back { padding: 0 16px; background: var(--bg); }
 @media (min-width: 700px) {
   .drug-list-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .drug-list-grid .drug-card { margin-bottom: 0; }
@@ -772,6 +773,9 @@ button.export-btn {
 </style>
 </head>
 <body>
+<!-- 回入口連結放在固定標題列上方：往下捲動時會捲走，不佔用固定列空間 -->
+<nav class="top-back"><a class="back-home" id="back-home" href="../">← 回急診臨床小工具</a></nav>
+<script>if (location.hostname.endsWith('github.io')) document.getElementById('back-home').href = '/ed-tools/';</script>
 <header>
   <h1>兒科藥物劑量速算 <span id="appver" style="font-size:12px;color:var(--muted);font-weight:400;">v2.5</span></h1>
   <div class="controls">
@@ -817,8 +821,6 @@ button.export-btn {
       個人速算工具。僅供臨床醫師快速參考，最終劑量以主治醫師臨床判斷為準。藥碼以高醫 HIS 為準，請於開藥前再次核對。<br>
       <b>資料來源：</b>Lexicomp / Nelson / UpToDate，並與高醫速算表（初版）及小兒常用藥丹交叉核對；各藥卡下方另列 📚 個別來源。（資料查核：2026-09-21）
     </div>
-    <a class="back-home" id="back-home" href="../">← 回急診臨床小工具</a>
-    <script>if (location.hostname.endsWith('github.io')) document.getElementById('back-home').href = '/ed-tools/';</script>
   </div>
 </main>
 
