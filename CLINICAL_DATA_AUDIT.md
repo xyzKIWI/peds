@@ -45,3 +45,11 @@
 - Anti-phen 糖漿、Ibuprofen（Idefen）糖漿加上速算 `calc.quick`：BW÷2 mL（0.5 mL/kg）。依據為初版速算表「BW/4~BW/2 ml」，Kiwi 指定取 BW/2。換算為 Anti-phen 12 mg/kg、Ibuprofen 10 mg/kg，都在原本的 mg/kg 範圍內。
 - 速算沿用既有單次上限（Anti-phen 1000 mg、Ibuprofen 400 mg），未改任何既有劑量、上限或範圍。
 - 待 Kiwi 決定：Voren、Aswell 的速算；錠劑是否往下取到 ¼ 顆；初版速算表與網頁不一致的項目（Anti-phen／Ibuprofen 單次上限 10 mL、croup epinephrine ≤ 4 歲上限 2.5 mL、Succinylcholine、Lorazepam、Ketamine IM、Peace／Cypromin 年齡分組）。
+
+## 2026-11-05 速算第二批、錠劑取整、Succinylcholine IM 上限（Kiwi 指定）
+
+- **Voren 栓劑**速算 BW÷12.5 顆（= 1 mg/kg/次）。Kiwi：臨床上都這樣給。參考：Voltarol 12.5 mg 仿單（HPRA）≥ 1 歲每天 0.5-2 mg/kg，分 2-3 次，每天最多 150 mg。
+- **Aswell 糖漿**速算 BW÷10 mL（= 0.1 mg/kg/次）。參考：EMA 2013／MHRA，≥ 1 歲 0.1-0.15 mg/kg，一天最多 3 次，每天 ≤ 0.5 mg/kg。
+- **Succinylcholine RSI IM** 加上單次上限 150 mg。依據：FDA Anectine 仿單（2022）IM 3-4 mg/kg，「not more than 150 mg total dose」。
+- **錠劑往下取到 ¼ 顆**：依 Kiwi 初版速算表「請開不超過表上的數值且容易給予的劑量，ex: 0.8 粒 → 0.75 粒」。只限 `form: tab`，膠囊、栓劑、針劑不取整。
+- 未改任何既有 mg/kg 範圍。

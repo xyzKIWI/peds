@@ -88,6 +88,12 @@ describe('計算結果都是有限數字（0.1-120 kg × 0-18 歲掃描）', () 
       for (let w = 0.5; w <= 120; w += 0.5) {
         const r = calc.calculateDose(drug, c, w, 10);
         const q = r.quick;
+        if (q.units !== undefined) {
+          // 顆數型（Voren）：落在 unitRange 內
+          assert.ok(Number.isFinite(q.units) && q.units > 0, `${label} ${w} kg`);
+          assert.ok(q.units >= r.unitRange[0] - 1e-9 && q.units <= r.unitRange[1] + 1e-9, `${label} ${w} kg 不在範圍內`);
+          continue;
+        }
         assert.ok(Number.isFinite(q.ml) && q.ml > 0, `${label} ${w} kg`);
         if (c.max_dose_mg) assert.ok(q.mg <= c.max_dose_mg + 1e-9, `${label} ${w} kg 超過上限`);
         assert.ok(q.mg >= r.mgRange[0] - 1e-9 && q.mg <= r.mgRange[1] + 1e-9, `${label} ${w} kg 不在範圍內`);

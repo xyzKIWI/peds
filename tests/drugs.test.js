@@ -114,9 +114,9 @@ drugSuite('idefen_syrup', () => {
     close(at50.ml, 20, '50 kg');
     assert.equal(at50.capped, true);
   });
-  test('只有 Kiwi 指定的兩個藥有速算', () => {
+  test('只有 Kiwi 指定的藥有速算（Anti-phen、Ibuprofen、Voren、Aswell）', () => {
     const withQuick = data.drugs.filter(d => d.calc?.quick || (d.indications || []).some(i => i.calc.quick)).map(d => d.id);
-    assert.deepEqual(withQuick, ['antiphen_syrup', 'idefen_syrup']);
+    assert.deepEqual(withQuick, ['antiphen_syrup', 'idefen_syrup', 'voren_supp', 'aswell_syrup']);
   });
   test('年齡切換點資料：< 6 個月 禁用（畫面行為見 page.test.js）', () => {
     const c = drug('idefen_syrup').contraindications[0];
@@ -133,6 +133,19 @@ drugSuite('voren_supp', () => {
   });
   test('120 kg：4.8-9.6 顆 — 無單次封頂（記錄現況，列入報告）', () => {
     range(dose('voren_supp', 120).unitRange, [4.8, 9.6], 'supp');
+  });
+  // 速算 BW÷12.5 顆：Kiwi 2026-11-05 指定（臨床常用；初版速算表 BW/25 ~ BW/12.5 取 BW/12.5）
+  test('速算 BW÷12.5：16 kg → 1.28 顆 = 16 mg（1 mg/kg）；25 kg → 2 顆；3 kg → 0.24 顆', () => {
+    const q = dose('voren_supp', 16).quick;
+    assert.equal(q.label, 'BW÷12.5');
+    close(q.units, 1.28, '16 kg');
+    close(q.mg, 16, 'mg');
+    close(q.mgPerKg, 1, 'mg/kg');
+    close(dose('voren_supp', 25).quick.units, 2, '25 kg');
+    close(dose('voren_supp', 3).quick.units, 0.24, '3 kg');
+  });
+  test('栓劑不套用 ¼ 取整（只限錠劑）', () => {
+    assert.equal(dose('voren_supp', 16).unitRangeRounded, undefined);
   });
 });
 
@@ -457,6 +470,19 @@ drugSuite('aswell_syrup', () => {
     range(dose('aswell_syrup', 3).mlRange, [0.3, 0.6], '3 kg');
     range(dose('aswell_syrup', 60).mgRange, [6, 10], '60 kg');
   });
+  // 速算 BW÷10 mL：Kiwi 2026-11-05 指定；= 0.1 mg/kg，在 EMA 2013 兒童 0.1-0.15 mg/kg 內
+  test('速算 BW÷10：16 kg → 1.6 mL = 1.6 mg（0.1 mg/kg）；3 kg → 0.3 mL', () => {
+    const q = dose('aswell_syrup', 16).quick;
+    close(q.ml, 1.6, 'mL');
+    close(q.mgPerKg, 0.1, 'mg/kg');
+    close(dose('aswell_syrup', 3).quick.ml, 0.3, '3 kg');
+  });
+  test('速算封頂：100 kg 剛好 10 mg（未標封頂）；120 kg 封頂 10 mg = 10 mL', () => {
+    assert.equal(dose('aswell_syrup', 100).quick.capped, false);
+    const q = dose('aswell_syrup', 120).quick;
+    close(q.ml, 10, 'mL');
+    assert.equal(q.capped, true);
+  });
 });
 
 drugSuite('promeran_tab', () => {
@@ -612,9 +638,14 @@ drugSuite('succinylcholine', () => {
   test('RSI IM 3 kg：3-4 mg/kg = 9-12 mg', () => {
     range(dose('succinylcholine', 3, undefined, 1).mgRange, [9, 12], 'mg');
   });
-  test('120 kg：IV 120-240 mg、IM 360-480 mg — 無封頂（記錄現況，列入報告）', () => {
+  test('IM 上限 150 mg（FDA Anectine 仿單「not more than 150 mg total dose」；Kiwi 2026-11-05 確認加上）', () => {
+    range(dose('succinylcholine', 37.5, undefined, 1).mgRange, [112.5, 150], '37.5 kg 高值剛好 150');
+    range(dose('succinylcholine', 50, undefined, 1).mgRange, [150, 150], '50 kg 兩端封頂');
+    range(dose('succinylcholine', 120, undefined, 1).mgRange, [150, 150], '120 kg IM');
+    range(dose('succinylcholine', 120, undefined, 1).mlRange, [3, 3], '120 kg IM 3 mL');
+  });
+  test('IV 仍無封頂：120 kg 120-240 mg（記錄現況，列入報告）', () => {
     range(dose('succinylcholine', 120, undefined, 0).mgRange, [120, 240], 'IV');
-    range(dose('succinylcholine', 120, undefined, 1).mgRange, [360, 480], 'IM');
   });
 });
 
@@ -899,6 +930,51 @@ drugSuite('adenosine', () => {
     range(dose('adenosine', 60, undefined, 1).mgRange, [12, 12], '60 kg 2nd');
     range(dose('adenosine', 80, undefined, 0).mlRange, [2, 2], '80 kg 1st');
     range(dose('adenosine', 80, undefined, 1).mlRange, [4, 4], '80 kg 2nd');
+  });
+});
+
+// ---------------------------------------------------------------- 錠劑 ¼ 取整
+// Kiwi 2026-11-05 指定：錠劑往下取到 ¼ 顆（初版速算表：開「不超過表上的數值且容易給予的劑量」，例 0.8 → 0.75 粒）
+describe('錠劑往下取到 ¼ 顆', () => {
+  const { floorToQuarter } = require('../dose-calculations.js');
+  test('floorToQuarter：0.8 → 0.75；0.75 → 0.75；0.74 → 0.5；1.71 → 1.5；0.24 → 0；2 → 2', () => {
+    assert.equal(floorToQuarter(0.8), 0.75);
+    assert.equal(floorToQuarter(0.75), 0.75);
+    assert.equal(floorToQuarter(0.74), 0.5);
+    assert.equal(floorToQuarter(1500 / 875), 1.5);
+    assert.equal(floorToQuarter(0.24), 0);
+    assert.equal(floorToQuarter(2), 2);
+    assert.equal(floorToQuarter(-1), null);
+    assert.equal(floorToQuarter(NaN), null);
+  });
+  test('Acetaminophen 錠 27 kg：算出 0.54-0.81 → ½-¾ 錠；3 kg：0.06-0.09 → 0', () => {
+    assert.deepEqual(dose('acetaminophen_tab', 27).unitRangeRounded, [0.5, 0.75]);
+    assert.deepEqual(dose('acetaminophen_tab', 3).unitRangeRounded, [0, 0]);
+  });
+  test('Promeran 10 kg：0.26-0.52 → ¼-½；Curam 錠 40 kg：1.71 → 1½', () => {
+    assert.deepEqual(dose('promeran_tab', 10).unitRangeRounded, [0.25, 0.5]);
+    assert.deepEqual(dose('curam_tab', 40).unitRangeRounded, [1.5, 1.5]);
+  });
+  test('所有錠劑（form = tab）在 0.5-120 kg：取整後是 ¼ 的倍數，且不超過算出的顆數', () => {
+    const tabs = data.drugs.filter(d => d.form === 'tab' && d.concentration_mg_per_unit);
+    for (const d of tabs) {
+      const calcs = d.calc ? [d.calc] : (d.indications || []).map(i => i.calc);
+      for (const c of calcs) {
+        for (let w = 0.5; w <= 120; w += 0.5) {
+          const r = require('../dose-calculations.js').calculateDose(d, c, w, 10);
+          if (!r.unitRange) continue;
+          r.unitRangeRounded.forEach((v, i) => {
+            assert.ok(Math.abs(v * 4 - Math.round(v * 4)) < 1e-9, `${d.id} ${w} kg 不是 ¼ 倍數`);
+            assert.ok(v <= r.unitRange[i] + 1e-9, `${d.id} ${w} kg 取整後變大`);
+            assert.ok(r.unitRange[i] - v < 0.25 + 1e-9, `${d.id} ${w} kg 少超過 ¼ 顆`);
+          });
+        }
+      }
+    }
+  });
+  test('膠囊、針劑不取整（Amoxicillin cap、Methylprednisolone Vial）', () => {
+    assert.equal(dose('amoxicillin_cap', 20).unitRangeRounded, undefined);
+    assert.equal(dose('methylpred_inj', 20, undefined, 0).unitRangeRounded, undefined);
   });
 });
 

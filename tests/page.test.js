@@ -183,13 +183,38 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     await context.close();
   });
 
-  test('沒有速算的藥照舊顯示範圍（例：Aswell）', async () => {
+  test('沒有速算的藥照舊顯示範圍（例：Morphine）', async () => {
     const { page, context } = await openPage(browser);
     await setWeight(page, 10);
-    const card = page.locator('.drug-card[data-id="aswell_syrup"], .drug-group:has([data-id="aswell_syrup"])').first();
-    assert.equal(await card.count(), 1, '找到 Aswell 卡片');
-    assert.match(await card.innerText(), /Aswell/);
+    const card = page.locator('.drug-card[data-id="morphine_inj"]');
+    assert.equal(await card.count(), 1, '找到 Morphine 卡片');
     assert.equal(await card.locator('.quick-dose').count(), 0);
+    assert.match(await card.innerText(), /0\.5-1\s*mg/);
+    await context.close();
+  });
+
+  test('Voren 速算 BW÷12.5：16 kg → 1.28 supp；Aswell 速算 BW÷10：16 kg → 1.6 mL', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await setWeight(page, 16);
+    await setAge(page, 4);
+    assert.match(await page.locator('.drug-card[data-id="voren_supp"] .quick-dose').innerText(), /速算 BW÷12\.5[\s\S]*1\.28\s*supp[\s\S]*16 mg（1 mg\/kg）/);
+    await page.fill('#search', 'aswell');
+    assert.match(await page.locator('.quick-dose').first().innerText(), /速算 BW÷10[\s\S]*1\.6\s*mL[\s\S]*0\.1 mg\/kg/);
+    await context.close();
+  });
+
+  test('錠劑取 ¼：Acetaminophen 錠 27 kg 顯示「½-¾ tab」與「算出 0.54-0.81」；3 kg 顯示「不足 ¼」', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await page.fill('#search', 'acetaminophen');
+    await setWeight(page, 27);
+    const tab = page.locator('.drug-group-form').filter({ hasText: '500mg tab' });
+    let text = await tab.innerText();
+    assert.match(text, /½-¾\s*tab/);
+    assert.match(text, /算出 0\.54-0\.81 tab，往下取 ¼ 顆/);
+    await setWeight(page, 3);
+    text = await tab.innerText();
+    assert.match(text, /不足 ¼/);
+    assert.equal(await hasHorizontalScroll(page), false);
     await context.close();
   });
 });

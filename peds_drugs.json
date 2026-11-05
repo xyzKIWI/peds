@@ -245,7 +245,11 @@
         "type": "supp_by_weight",
         "kg_per_supp_low": 25,
         "kg_per_supp_high": 12.5,
-        "max_doses_per_day": 2
+        "max_doses_per_day": 2,
+        "quick": {
+          "kg_per_unit": 12.5,
+          "label": "BW÷12.5"
+        }
       },
       "frequency": "Q6H PRN",
       "notes": "速算: BW÷25 ~ BW÷12.5 顆；Max 2 顆/日；嬰幼兒退燒備用",
@@ -1346,7 +1350,11 @@
         "low": 0.1,
         "high": 0.2,
         "max_dose_mg": 10,
-        "doses_per_day": 3
+        "doses_per_day": 3,
+        "quick": {
+          "ml_per_kg": 0.1,
+          "label": "BW÷10"
+        }
       },
       "frequency": "TID PC PRN",
       "notes": "注意 EPS 副作用，可與 diphenhydramine 並用預防",
@@ -1865,7 +1873,9 @@
           "calc": {
             "type": "mg_per_kg_per_dose",
             "low": 3,
-            "high": 4
+            "high": 4,
+            "max_dose_mg": 150,
+            "max_dose_source": "FDA Anectine 仿單：IM 3-4 mg/kg，總量不超過 150 mg"
           },
           "frequency": "ST"
         }

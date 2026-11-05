@@ -13,11 +13,11 @@
 | 檔案 | 內容 | 結果 |
 | --- | --- | --- |
 | `tests/calculations.test.js` | 原有測試（Ketamine、Acetaminophen、Ibuprofen、輸入邊界），未改動 | 通過 |
-| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 191 通過 |
+| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 201 通過 |
 | `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；速算落在範圍內；畫面數字取整 `num()` | 83 通過 |
-| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 18 通過 |
+| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 20 通過 |
 | `tests/flows.test.js` | PALS 三個流程與 SE 四個階段：順序與 20 kg、3 kg、120 kg 劑量和頁面一致 | 16 通過 |
-| **合計** | | **309 項：309 通過、0 todo、0 失敗** |
+| **合計** | | **321 項：321 通過、0 todo、0 失敗** |
 
 頁面測試需要 Playwright。CI 會臨時安裝（`--no-save`，repo 不新增依賴）；本機沒裝時頁面測試會自動 skip，計算測試照跑。
 
@@ -109,10 +109,14 @@
 | --- | --- | --- | --- | --- |
 | Anti-phen 糖漿（24 mg/mL） | BW÷2 mL | 8 mL | 192 mg = 12 mg/kg | 1000 mg；≥ 83.3 kg 封頂 41.7 mL，畫面標「已達單次上限」 |
 | Ibuprofen（Idefen）糖漿（20 mg/mL） | BW÷2 mL | 8 mL | 160 mg = 10 mg/kg | 400 mg；> 40 kg 封頂 20 mL，畫面標「已達單次上限」 |
+| Voren 栓劑（12.5 mg） | BW÷12.5 顆 | 1.28 顆 | 16 mg = 1 mg/kg | 無單次上限（見 5.2） |
+| Aswell 糖漿（1 mg/mL） | BW÷10 mL | 1.6 mL | 1.6 mg = 0.1 mg/kg | 10 mg；> 100 kg 封頂並標示 |
 
 - 依據：Kiwi 的初版速算表兩藥都寫「BW/4~BW/2 ml」，Kiwi 指定取 BW/2。Anti-phen 藥卡備註原本就寫「BW÷2 mL = 12 mg/kg/dose」。
 - 速算沿用該藥既有的單次上限；測試確認 0.5-120 kg 的速算都落在參考範圍內、不超過上限。
-- 其他藥目前沒有速算，照舊顯示範圍。Voren、Aswell 要用哪個速算、錠劑是否往下取到 ¼ 顆，尚待 Kiwi 決定。
+- Voren、Aswell 速算由 Kiwi 2026-11-05 指定（Voren：臨床常用 BW÷12.5；Aswell：BW÷10，即 0.1 mg/kg，在 EMA 2013 兒童 0.1-0.15 mg/kg 內）。其他藥沒有速算，照舊顯示範圍。
+- **錠劑往下取到 ¼ 顆**（Kiwi 指定，依初版速算表規則）：`form` 為 tab 且有算出顆數的 9 個錠劑，大字顯示取整結果（例：27 kg Acetaminophen 錠 ½-¾ 錠），小字保留算出的原始顆數；算出不足 ¼ 顆時顯示「不足 ¼」。膠囊、栓劑、針劑不取整。
+- **Succinylcholine IM 上限 150 mg**（Kiwi 指定，依 FDA Anectine 仿單「not more than 150 mg total dose」）。
 - 初版速算表與網頁不一致的單次上限（Anti-phen 10 mL、Ibuprofen 10 mL）**沒有套用**，速算仍用網頁現有的 1000 mg／400 mg。
 
 ## 5. 缺少封頂或邊界可疑的地方（測試記錄現況，未標 todo）
@@ -123,7 +127,7 @@
 2. **`index.html` 內嵌一份舊的 `calcDose`**（約 190 行），已被 `dose-calculations.js` 取代、不會執行，但留著容易讓人改錯地方。
 3. **體重輸入框 `max="100"`**，但 JS 和計算層接受到 120 kg，兩邊不一致。
 4. **畫面數字兩位小數**：< 0.005 會顯示成「0」（只有 < 0.5 kg 才會遇到）；Ketamine 6 kg 開藥量 0.048 Vial 顯示成「0.05 Vial」。
-5. **顆數不取整**：錠劑、栓劑、包數都照小數顯示（例：Promeran 10 kg 0.26-0.52 tab、Curam 40 kg 1.71 tab、Voren 3 kg 0.12-0.24 顆），沒有換算成 ½ 或 ¼ 顆。是否需要取整請 Kiwi 決定。
+5. ~~顆數不取整~~：錠劑已改為往下取到 ¼ 顆（見 4.1）。栓劑、包數仍照小數顯示（例：Voren 16 kg 1.28 顆）。
 
 ### 5.2 沒有單次上限（120 kg 時的結果）
 
@@ -136,7 +140,7 @@
 | Smecta | BW÷30 包 | 4 包/dose |
 | Glycerin | 0.5 mL/kg | 60 mL |
 | Taita（4-2-1 rule） | | 160 mL/hr |
-| Succinylcholine | IV 1-2、IM 3-4 mg/kg | IV 120-240 mg、IM 360-480 mg |
+| Succinylcholine IV | IV 1-2 mg/kg | IV 120-240 mg（IM 已加上 150 mg 上限，見 4.1） |
 | Ketamine 處置鎮靜 | IM 4 mg/kg | 480 mg = 9.6 mL（`singleDose` 有上限參數，但 protocol 沒有設定） |
 | PALS 電擊能量 | J/kg × 體重 | 去顫 240／480 J、同步 60-120／240 J；「max 10 J/kg or adult dose」只在備註文字 |
 

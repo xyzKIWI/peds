@@ -40,8 +40,15 @@
   // 仍套用同一規則的單次上下限（max_dose_mg / min_dose_mg）。
   function quickDose(calc, drug, weight) {
     const q = calc.quick;
+    if (!q) return null;
+    // 栓劑／顆數型：BW÷N 顆（例：Voren BW÷12.5）
+    if (Number.isFinite(q.kg_per_unit) && q.kg_per_unit > 0) {
+      const units = weight / q.kg_per_unit;
+      const mg = drug.concentration_mg_per_unit ? units * drug.concentration_mg_per_unit : null;
+      return { label: q.label, units, unit: drug.unit || '#', mg, mgPerKg: mg == null ? null : mg / weight, capped: false };
+    }
     const conc = drug.concentration_mg_per_ml;
-    if (!q || !Number.isFinite(q.ml_per_kg) || !(conc > 0)) return null;
+    if (!Number.isFinite(q.ml_per_kg) || !(conc > 0)) return null;
     let ml = weight * q.ml_per_kg;
     let mg = ml * conc;
     let capped = false;
@@ -52,6 +59,12 @@
     if (calc.min_dose_mg && mg < calc.min_dose_mg) mg = calc.min_dose_mg;
     ml = mg / conc;
     return { label: q.label, ml, mg, mgPerKg: mg / weight, capped };
+  }
+
+  // 錠劑往下取到 ¼ 顆（Kiwi 初版速算表：開「不超過表上的數值且容易給予的劑量」，例 0.8 → 0.75 粒）
+  function floorToQuarter(x) {
+    if (!Number.isFinite(x) || x < 0) return null;
+    return Math.floor(x * 4 + 1e-9) / 4;
   }
 
   function calculateDose(drug, calc, weight, age) {
@@ -83,6 +96,7 @@
       }
       if (drug.concentration_mg_per_unit) {
         result.unitRange = [lowMg / drug.concentration_mg_per_unit, highMg / drug.concentration_mg_per_unit];
+        if (drug.form === 'tab') result.unitRangeRounded = result.unitRange.map(floorToQuarter);
       }
       const quick = quickDose(calc, drug, weight);
       if (quick) result.quick = quick;
@@ -111,6 +125,7 @@
       }
       if (drug.concentration_mg_per_unit) {
         result.unitRange = [lowMg / drug.concentration_mg_per_unit, highMg / drug.concentration_mg_per_unit];
+        if (drug.form === 'tab') result.unitRangeRounded = result.unitRange.map(floorToQuarter);
       }
       return result;
     }
@@ -163,11 +178,14 @@
     if (t === 'supp_by_weight') {
       if (weight == null) return { needs_weight: true };
       if (!validWeight(weight)) return { invalid_weight: true };
-      return {
+      const result = {
         type: 'dose',
         unitRange: [weight / calc.kg_per_supp_low, weight / calc.kg_per_supp_high],
         rule: `BW÷${calc.kg_per_supp_low} ~ BW÷${calc.kg_per_supp_high} 顆`
       };
+      const quick = quickDose(calc, drug, weight);
+      if (quick) result.quick = quick;
+      return result;
     }
 
     if (t === 'pack_per_10kg_per_day') {
@@ -250,5 +268,5 @@
     return { type: 'special', text: JSON.stringify(calc) };
   }
 
-  return { calculateDose, packageOrderAmount, singleDose, validWeight, validAgeYears };
+  return { calculateDose, packageOrderAmount, singleDose, validWeight, validAgeYears, floorToQuarter };
 });
