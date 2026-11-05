@@ -251,4 +251,17 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     assert.equal(await aswell.locator('.quick-dose').count(), 0);
     await context.close();
   });
+  test('Voren 40 kg 速算封頂 2 顆並標「每日最多 2 顆」；Acetaminophen 錠 40 kg 顯示 ¾-1 錠、單次上限 500 mg', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await setWeight(page, 40);
+    await setAge(page, 10);
+    const voren = await page.locator('.drug-card[data-id="voren_supp"]').innerText();
+    assert.match(voren, /2\s*supp[\s\S]*已達上限（每日最多 2 顆）/);
+    assert.match(voren, /每日最多 2 顆（單次也不超過 2 顆）/);
+    await page.fill('#search', 'acetaminophen');
+    const tab = await page.locator('.drug-group-form[data-id="acetaminophen_tab"]').innerText();
+    assert.match(tab, /¾-1\s*tab/);
+    assert.match(tab, /單次上限 500 mg/);
+    await context.close();
+  });
 });

@@ -229,6 +229,20 @@
       };
       const quick = quickDose(calc, drug, weight);
       if (quick) result.quick = quick;
+      // 每日最多 N 顆（如 Voren 2 顆/日）：單次也不能超過 N 顆
+      if (calc.max_units_per_day) {
+        const cap = calc.max_units_per_day;
+        if (result.unitRange[1] > cap) result.capped = true;
+        result.unitRange = result.unitRange.map(u => Math.min(u, cap));
+        if (quick && quick.units > cap) {
+          quick.units = cap;
+          quick.capped = true;
+          if (drug.concentration_mg_per_unit) {
+            quick.mg = cap * drug.concentration_mg_per_unit;
+            quick.mgPerKg = quick.mg / weight;
+          }
+        }
+      }
       return addRounded(result, drug);
     }
 

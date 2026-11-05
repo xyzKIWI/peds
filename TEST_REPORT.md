@@ -15,9 +15,9 @@
 | `tests/calculations.test.js` | 原有測試（Ketamine、Acetaminophen、Ibuprofen、輸入邊界），未改動 | 通過 |
 | `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 208 通過 |
 | `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；速算落在範圍內；畫面數字取整 `num()` | 83 通過 |
-| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 22 通過 |
+| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 23 通過 |
 | `tests/flows.test.js` | PALS 三個流程與 SE 四個階段：順序與 20 kg、3 kg、120 kg 劑量和頁面一致 | 16 通過 |
-| **合計** | | **330 項：330 通過、0 todo、0 失敗** |
+| **合計** | | **331 項：331 通過、0 todo、0 失敗** |
 
 頁面測試需要 Playwright。CI 會臨時安裝（`--no-save`，repo 不新增依賴）；本機沒裝時頁面測試會自動 skip，計算測試照跑。
 
@@ -134,6 +134,12 @@
 | 體重輸入框 | `max` 100 → 120，與 JS、計算層一致 | 程式一致性 |
 | index.html | 刪除不會執行的舊 `calcDose` 副本（約 185 行），改為 `const calcDose = PedsDoseCalc.calculateDose` | 程式整理，行為不變 |
 - 初版速算表與網頁不一致的單次上限（Anti-phen 10 mL、Ibuprofen 10 mL）**沒有套用**，速算仍用網頁現有的 1000 mg／400 mg。
+
+## 4.3 最後決定（2026-11-05，Kiwi）
+
+- **Voren**：以藥卡備註「Max 2 顆/日」為準。`max_doses_per_day: 2` 改為 `max_units_per_day: 2`，單次也不超過 2 顆；25 kg 起速算封頂 2 顆，畫面標「已達上限（每日最多 2 顆）」。
+- **Acetaminophen 錠**：以藥卡備註「Max 1#/dose」為準，單次上限 1000 mg 改為 500 mg（1 錠）；33.3 kg 起封頂。
+- **第 5 節其餘項目**：Kiwi 決定**維持現狀**，包含：Smecta 備註與計算不一致、SE 第一線 midazolam 用舊品 2MIDAT、Diazepam 肛門管只用 10 mg 管換算、5.2 列出的無單次上限藥物、MgO 5-6／11-12 歲與 LGG < 3 歲分組缺口、Lidocaine 100 mg 與 Phenobarbital 1000 mg 上限出處、Amiodarone 第二劑 150 mg 上限只在文字。測試照現況記錄，之後要改再處理。
 
 ## 5. 缺少封頂或邊界可疑的地方（測試記錄現況，未標 todo）
 

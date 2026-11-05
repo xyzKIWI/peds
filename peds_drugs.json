@@ -158,7 +158,8 @@
         "type": "mg_per_kg_per_dose",
         "low": 10,
         "high": 15,
-        "max_dose_mg": 1000,
+        "max_dose_mg": 500,
+        "max_dose_source": "藥卡備註「Max 1#/dose」（Kiwi 2026-11-05 確認以備註為準）",
         "max_doses_per_day": 5
       },
       "frequency": "Q4-6H PRN",
@@ -245,7 +246,8 @@
         "type": "supp_by_weight",
         "kg_per_supp_low": 25,
         "kg_per_supp_high": 12.5,
-        "max_doses_per_day": 2,
+        "max_units_per_day": 2,
+        "max_units_source": "藥卡備註「Max 2 顆/日」（Kiwi 2026-11-05 確認以備註為準）",
         "quick": {
           "kg_per_unit": 12.5,
           "label": "BW÷12.5"

@@ -69,3 +69,9 @@
 - **MgO < 2 歲**：BW÷20 # 算出顆數。
 - **Tamiflu**：加 `suspension_mg_per_ml` 6 與各組 `mg_per_dose`，顯示懸液 mL（FDA 仿單 Table 1）。
 - **栓劑、包數往下取 ½**（Voren、Actein、Smecta），錠劑維持 ¼。
+
+## 2026-11-05 最後決定（Kiwi）
+
+- **Voren 栓劑**：以藥卡備註「Max 2 顆/日」為準，`max_doses_per_day: 2` 改為 `max_units_per_day: 2`；單次也不超過 2 顆。
+- **Acetaminophen 錠**：以藥卡備註「Max 1#/dose」為準，`max_dose_mg` 1000 改為 500。
+- **其餘待決項目維持現狀**（見 TEST_REPORT.md 4.3）。

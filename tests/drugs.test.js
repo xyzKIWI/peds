@@ -77,10 +77,14 @@ drugSuite('acetaminophen_tab', () => {
   test('3 kg：30-45 mg = 0.06-0.09 tab（顆數不取整）', () => {
     range(dose('acetaminophen_tab', 3).unitRange, [0.06, 0.09], 'tab');
   });
-  test('120 kg：封頂 1000 mg = 2 tab', () => {
+  // 單次上限依藥卡備註「Max 1#/dose」= 500 mg（Kiwi 2026-11-05 確認以備註為準）
+  test('單次上限 1 錠（500 mg）：33.3 kg 起高值封頂；40 kg 400-500 mg = 0.8-1 → ¾-1 錠；120 kg 500 mg = 1 錠', () => {
+    const at40 = dose('acetaminophen_tab', 40);
+    range(at40.mgRange, [400, 500], '40 kg mg');
+    assert.deepEqual(at40.unitRangeRounded, [0.75, 1]);
     const r = dose('acetaminophen_tab', 120);
-    range(r.mgRange, [1000, 1000], 'mg');
-    range(r.unitRange, [2, 2], 'tab');
+    range(r.mgRange, [500, 500], 'mg');
+    range(r.unitRange, [1, 1], 'tab');
   });
 });
 
@@ -131,8 +135,20 @@ drugSuite('voren_supp', () => {
   test('3 kg：0.12-0.24 顆（不取整到半顆）', () => {
     range(dose('voren_supp', 3).unitRange, [0.12, 0.24], 'supp');
   });
-  test('120 kg：4.8-9.6 顆 — 無單次封頂（記錄現況，列入報告）', () => {
-    range(dose('voren_supp', 120).unitRange, [4.8, 9.6], 'supp');
+  // 每日最多 2 顆，依藥卡備註「Max 2 顆/日」（Kiwi 2026-11-05 確認以備註為準）；單次也不超過 2 顆
+  test('每日最多 2 顆：25 kg 速算剛好 2 顆（未標封頂）；40 kg、120 kg 範圍與速算都封頂 2 顆並標 capped', () => {
+    const at25 = dose('voren_supp', 25);
+    assert.equal(at25.quick.units, 2);
+    assert.equal(at25.quick.capped, false);
+    for (const w of [40, 120]) {
+      const r = dose('voren_supp', w);
+      assert.ok(r.unitRange[1] <= 2, `${w} kg 範圍`);
+      assert.equal(r.quick.units, 2, `${w} kg 速算`);
+      assert.equal(r.quick.capped, true);
+      assert.equal(r.capped, true);
+    }
+    assert.equal(drug('voren_supp').calc.max_units_per_day, 2);
+    assert.equal(drug('voren_supp').calc.max_doses_per_day, undefined);
   });
   // 速算 BW÷12.5 顆：Kiwi 2026-11-05 指定（臨床常用；初版速算表 BW/25 ~ BW/12.5 取 BW/12.5）
   test('速算 BW÷12.5：16 kg → 1.28 顆 = 16 mg（1 mg/kg）；25 kg → 2 顆；3 kg → 0.24 顆', () => {
