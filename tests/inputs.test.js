@@ -26,8 +26,8 @@ describe('validWeight / validAgeYears 邊界', () => {
     assert.equal(calc.validAgeYears(18), true);
     for (const bad of [-0.01, 18.01, NaN, Infinity, '5']) assert.equal(calc.validAgeYears(bad), false, String(bad));
   });
-  test('畫面體重輸入框 max="100"，但 JS 與計算層接受到 120 kg（記錄現況，列入報告）', () => {
-    assert.match(html, /id="weight"[^>]*max="100"/);
+  test('畫面體重輸入框 max="120"，與 JS、計算層一致（2026-11-05 修正，原本 100）', () => {
+    assert.match(html, /id="weight"[^>]*max="120"/);
     assert.match(html, /v <= 0 \|\| v > 120/);
   });
 });
@@ -163,8 +163,9 @@ describe('畫面數字取整 num()（從 index.html 取出原函式執行，不�
 });
 
 describe('頁面使用的計算層', () => {
-  test('index.html 以 PedsDoseCalc.calculateDose 覆蓋內嵌 calcDose（內嵌版是未使用的舊副本，列入報告）', () => {
-    assert.match(html, /calcDose = PedsDoseCalc\.calculateDose;/);
+  test('index.html 直接使用 PedsDoseCalc.calculateDose，沒有內嵌的舊計算副本（2026-11-05 移除）', () => {
+    assert.match(html, /const calcDose = PedsDoseCalc\.calculateDose;/);
+    assert.doesNotMatch(html, /function calcDose\(/);
     assert.match(html, /<script src="dose-calculations\.js"><\/script>/);
   });
 });

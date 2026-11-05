@@ -196,7 +196,8 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     const { page, context } = await openPage(browser, { width: 375 });
     await setWeight(page, 16);
     await setAge(page, 4);
-    assert.match(await page.locator('.drug-card[data-id="voren_supp"] .quick-dose').innerText(), /速算 BW÷12\.5[\s\S]*1\.28\s*supp[\s\S]*16 mg（1 mg\/kg）/);
+    // 速算 1.28 顆往下取 ½ → 1 顆 = 12.5 mg；小字保留算出 1.28（16 mg）
+    assert.match(await page.locator('.drug-card[data-id="voren_supp"] .quick-dose').innerText(), /速算 BW÷12\.5[\s\S]*1\s*supp[\s\S]*12\.5 mg（0\.78 mg\/kg）；算出 1\.28 supp（16 mg），往下取 ½ 顆/);
     await page.fill('#search', 'aswell');
     assert.match(await page.locator('.quick-dose').first().innerText(), /速算 BW÷10[\s\S]*1\.6\s*mL[\s\S]*0\.1 mg\/kg/);
     await context.close();
@@ -232,6 +233,22 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     assert.match(text, /10\s*mL/);
     assert.match(text, /每日上限 < 7 歲 12 mg、≥ 7 歲 16 mg/);
     assert.equal(await hasHorizontalScroll(page), false);
+    await context.close();
+  });
+  test('Tamiflu 顯示懸液 mL；Aswell 6 個月禁用並隱藏數字；Smecta 顯示取整包數', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await setWeight(page, 16);
+    await setAge(page, 4);
+    const tami = await page.locator('.drug-card[data-id="tamiflu"]').innerText();
+    assert.match(tami, /45 mg BID × 5 days[\s\S]*懸液 6 mg\/mL[\s\S]*7\.5\s*mL/);
+    const smecta = await page.locator('.drug-card[data-id="smecta"]').innerText();
+    assert.match(smecta, /½\s*包\/dose/);
+    assert.match(smecta, /算出 0\.53 包，往下取 ½ 包/);
+    await setAge(page, 6, 'months');
+    await page.fill('#search', 'aswell');
+    const aswell = page.locator('.drug-group-form[data-id="aswell_syrup"]');
+    assert.match(await aswell.innerText(), /< 1 歲禁用（EMA 2013/);
+    assert.equal(await aswell.locator('.quick-dose').count(), 0);
     await context.close();
   });
 });

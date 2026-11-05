@@ -144,8 +144,12 @@ drugSuite('voren_supp', () => {
     close(dose('voren_supp', 25).quick.units, 2, '25 kg');
     close(dose('voren_supp', 3).quick.units, 0.24, '3 kg');
   });
-  test('栓劑不套用 ¼ 取整（只限錠劑）', () => {
-    assert.equal(dose('voren_supp', 16).unitRangeRounded, undefined);
+  test('栓劑往下取 ½ 顆（Kiwi 2026-11-05）：16 kg 範圍 0.64-1.28 → ½-1；速算 1.28 → 1；3 kg 0.24 → 0', () => {
+    const r = dose('voren_supp', 16);
+    assert.equal(r.roundStep, 0.5);
+    assert.deepEqual(r.unitRangeRounded, [0.5, 1]);
+    assert.equal(r.quick.unitsRounded, 1);
+    assert.equal(dose('voren_supp', 3).quick.unitsRounded, 0);
   });
 });
 
@@ -406,10 +410,17 @@ drugSuite('tamiflu', () => {
     assert.match(drug('tamiflu').package, /(^|\D)6 mg\/mL susp/);
     assert.doesNotMatch(drug('tamiflu').package, /60 mg\/mL/);
   });
-  test('嬰兒 3 mg/kg 沒有封頂、也沒有換算懸液 mL（資料無 concentration_mg_per_ml）', () => {
+  test('[FDA-Tamiflu] 懸液 6 mg/mL：嬰兒 3 mg/kg = 0.5 mL/kg（12 kg 36 mg = 6 mL，沒有封頂）', () => {
     const r = dose('tamiflu', 12, 0.9);
     range(r.mgRange, [36, 36], '12 kg 嬰兒');
-    assert.equal(r.mlRange, undefined);
+    range(r.mlRange, [6, 6], 'mL');
+  });
+  test('[FDA-Tamiflu] Table 1 懸液 mL：30 mg = 5 mL、45 mg = 7.5 mL、60 mg = 10 mL、75 mg = 12.5 mL', () => {
+    for (const [w, mg, ml] of [[12, 30, 5], [20, 45, 7.5], [30, 60, 10], [50, 75, 12.5]]) {
+      const s = dose('tamiflu', w, 5).suspension;
+      assert.equal(s.mg, mg, `${w} kg mg`);
+      close(s.ml, ml, `${w} kg mL`);
+    }
   });
 });
 
@@ -428,14 +439,18 @@ drugSuite('rapiacta_iv', () => {
 
 drugSuite('xofluza_tab', () => {
   test('出處範例 [FDA-Xofluza] < 20 kg → 2 mg/kg；20 至 < 80 kg → 40 mg；≥ 80 kg → 80 mg', () => {
-    assert.match(dose('xofluza_tab', 19.9).bandText, /2 mg\/kg/);
+    range(dose('xofluza_tab', 19.9).mgRange, [39.8, 39.8], '19.9 kg');
     assert.match(dose('xofluza_tab', 20).bandText, /^40 mg/);
     assert.match(dose('xofluza_tab', 79.9).bandText, /^40 mg/);
     assert.match(dose('xofluza_tab', 80).bandText, /^80 mg/);
-    assert.match(dose('xofluza_tab', 3).bandText, /2 mg\/kg/);
   });
-  test('< 20 kg 只顯示「2 mg/kg」文字，沒有算出 mg', () => {
-    assert.equal(dose('xofluza_tab', 15).mgRange, undefined);
+  test('< 20 kg 算出 mg 與 20 mg 錠數，往下取 ¼（Kiwi 2026-11-05）：15 kg 30 mg = 1½ 錠；16 kg 32 mg = 1.6 → 1½；3 kg 6 mg = 0.3 → ¼', () => {
+    const r = dose('xofluza_tab', 15);
+    range(r.mgRange, [30, 30], 'mg');
+    assert.deepEqual(r.unitRangeRounded, [1.5, 1.5]);
+    assert.deepEqual(dose('xofluza_tab', 16).unitRangeRounded, [1.5, 1.5]);
+    assert.deepEqual(dose('xofluza_tab', 3).unitRangeRounded, [0.25, 0.25]);
+    assert.match(r.rule, /FDA 仿單 <20 kg 用懸液/);
   });
   test('[FDA-Xofluza] 仿單適用 ≥ 5 歲：禁忌設 < 5 歲「不建議」；分組、notes、藥品資料文字都寫 ≥5 歲（2026-11-04 修正）', () => {
     const d = drug('xofluza_tab');
@@ -459,14 +474,20 @@ drugSuite('relenza_inh', () => {
 
 // ---------------------------------------------------------------- 腸胃
 drugSuite('aswell_syrup', () => {
-  test('出處範例 [JSON 高醫速算表] 10 kg：0.1-0.2 mg/kg = 1-2 mg = 1-2 mL', () => {
+  // 範圍依 EMA 2013（ema.europa.eu metoclopramide referral；MHRA 同）修正：≥ 1 歲 0.1-0.15 mg/kg，每日 ≤ 0.5 mg/kg，< 1 歲禁用（Kiwi 2026-11-05）
+  test('出處範例 [EMA 2013] 10 kg：0.1-0.15 mg/kg = 1-1.5 mg = 1-1.5 mL（1 mg/mL）', () => {
     const r = dose('aswell_syrup', 10);
-    range(r.mgRange, [1, 2], 'mg');
-    range(r.mlRange, [1, 2], 'mL');
+    range(r.mgRange, [1, 1.5], 'mg');
+    range(r.mlRange, [1, 1.5], 'mL');
   });
-  test('3 kg → 0.3-0.6 mL；60 kg → 6-10 mg（高值封頂）', () => {
-    range(dose('aswell_syrup', 3).mlRange, [0.3, 0.6], '3 kg');
-    range(dose('aswell_syrup', 60).mgRange, [6, 10], '60 kg');
+  test('3 kg → 0.3-0.45 mL；70 kg → 7-10 mg（高值封頂）', () => {
+    range(dose('aswell_syrup', 3).mlRange, [0.3, 0.45], '3 kg');
+    range(dose('aswell_syrup', 70).mgRange, [7, 10], '70 kg');
+  });
+  test('[EMA 2013] < 1 歲禁用、每日上限 0.5 mg/kg（顯示用）', () => {
+    const c = drug('aswell_syrup').contraindications[0];
+    assert.deepEqual([c.type, c.threshold_months, c.severity], ['age_below_months', 12, '禁用']);
+    assert.equal(drug('aswell_syrup').calc.max_mg_per_kg_per_day, 0.5);
   });
   // 速算 BW÷10 mL：Kiwi 2026-11-05 指定；= 0.1 mg/kg，在 EMA 2013 兒童 0.1-0.15 mg/kg 內
   test('速算 BW÷10：16 kg → 1.6 mL = 1.6 mg（0.1 mg/kg）；3 kg → 0.3 mL', () => {
@@ -484,22 +505,28 @@ drugSuite('aswell_syrup', () => {
 });
 
 drugSuite('promeran_tab', () => {
-  test('出處範例 [JSON Lexicomp + 高醫藥品庫] 10 kg：1-2 mg ÷ 3.84 mg/tab = 0.26-0.52 tab（不取整）', () => {
-    range(dose('promeran_tab', 10).unitRange, [1 / 3.84, 2 / 3.84], 'tab');
+  // 範圍依 EMA 2013（ema.europa.eu metoclopramide referral；MHRA 同）修正：≥ 1 歲 0.1-0.15 mg/kg，每日 ≤ 0.5 mg/kg，< 1 歲禁用（Kiwi 2026-11-05）
+  test('出處範例 [EMA 2013] 10 kg：1-1.5 mg ÷ 3.84 mg/tab = 0.26-0.39 tab → 取整 ¼-¼', () => {
+    const r = dose('promeran_tab', 10);
+    range(r.unitRange, [1 / 3.84, 1.5 / 3.84], 'tab');
+    assert.deepEqual(r.unitRangeRounded, [0.25, 0.25]);
   });
-  test('3 kg；100 kg 封頂 10 mg', () => {
-    range(dose('promeran_tab', 3).mgRange, [0.3, 0.6], '3 kg');
-    range(dose('promeran_tab', 100).mgRange, [10, 10], '100 kg');
+  test('3 kg 0.3-0.45 mg；70 kg 封頂 10 mg；< 1 歲禁用', () => {
+    range(dose('promeran_tab', 3).mgRange, [0.3, 0.45], '3 kg');
+    range(dose('promeran_tab', 70).mgRange, [7, 10], '70 kg');
+    assert.equal(drug('promeran_tab').contraindications[0].severity, '禁用');
   });
 });
 
 drugSuite('primperan_inj', () => {
-  test('出處範例 [JSON 高醫速算表] 10 kg：1-2 mg = 0.2-0.4 mL（5 mg/mL）', () => {
-    range(dose('primperan_inj', 10).mlRange, [0.2, 0.4], 'mL');
+  // 範圍依 EMA 2013（ema.europa.eu metoclopramide referral；MHRA 同）修正：≥ 1 歲 0.1-0.15 mg/kg，每日 ≤ 0.5 mg/kg，< 1 歲禁用（Kiwi 2026-11-05）
+  test('出處範例 [EMA 2013] 10 kg：1-1.5 mg = 0.2-0.3 mL（5 mg/mL）', () => {
+    range(dose('primperan_inj', 10).mlRange, [0.2, 0.3], 'mL');
   });
-  test('3 kg → 0.06-0.12 mL；100 kg 封頂 10 mg = 2 mL', () => {
-    range(dose('primperan_inj', 3).mlRange, [0.06, 0.12], '3 kg');
-    range(dose('primperan_inj', 100).mlRange, [2, 2], '100 kg');
+  test('3 kg → 0.06-0.09 mL；70 kg 封頂 10 mg = 2 mL；< 1 歲禁用', () => {
+    range(dose('primperan_inj', 3).mlRange, [0.06, 0.09], '3 kg');
+    range(dose('primperan_inj', 70).mlRange, [1.4, 2], '70 kg');
+    assert.equal(drug('primperan_inj').contraindications[0].severity, '禁用');
   });
 });
 
@@ -548,8 +575,8 @@ drugSuite('mgo_tab', () => {
   test('出處：[JSON 高醫速算表]；年齡分組文字，未找到可驗證範例', () => {
     assert.equal(dose('mgo_tab', 20, 3).bandText, '0.5-1 # TID-QID');
   });
-  test('年齡切換點：1.99 → BW÷20；2 → 0.5-1 #；6 → 1-2 #；12 → 2 #', () => {
-    assert.equal(dose('mgo_tab', 10, 1.99).bandText, 'BW÷20 # TID-QID');
+  test('年齡切換點：1.99 → BW÷20 算出顆數；2 → 0.5-1 #；6 → 1-2 #；12 → 2 #', () => {
+    range(dose('mgo_tab', 10, 1.99).unitRange, [0.5, 0.5], '1.99 歲');
     assert.equal(dose('mgo_tab', 10, 2).bandText, '0.5-1 # TID-QID');
     assert.equal(dose('mgo_tab', 20, 6).bandText, '1-2 # TID-QID');
     assert.equal(dose('mgo_tab', 40, 12).bandText, '2 # TID-QID');
@@ -558,8 +585,12 @@ drugSuite('mgo_tab', () => {
     assert.equal(dose('mgo_tab', 20, 5.5).bandText, '無相符區間');
     assert.equal(dose('mgo_tab', 35, 11.5).bandText, '無相符區間');
   });
-  test('< 2 歲「BW÷20 #」只顯示公式文字，沒有算出顆數', () => {
-    assert.equal(dose('mgo_tab', 10, 1).unitRange, undefined);
+  test('< 2 歲 BW÷20 #（Kiwi 2026-11-05：算出顆數）：10 kg → 0.5 粒 = 125 mg；7 kg → 0.35 → 取整 ¼；缺體重 → needs_weight', () => {
+    const r = dose('mgo_tab', 10, 1);
+    range(r.unitRange, [0.5, 0.5], '10 kg');
+    range(r.mgRange, [125, 125], 'mg');
+    assert.deepEqual(dose('mgo_tab', 7, 1).unitRangeRounded, [0.25, 0.25]);
+    assert.deepEqual(dose('mgo_tab', null, 1), { needs_weight: true });
   });
 });
 
@@ -948,6 +979,13 @@ drugSuite('peace_syrup', () => {
       assert.equal(r.capped, true);
     }
   });
+  test('食藥署 2025-07-31 公告（衛授食字第1141417643號）警語：嚴重高血壓／末期腎病禁用、PRES／RCVS、短期使用（Kiwi 2026-11-05）', () => {
+    const w = drug('peace_syrup').warnings.join('\n');
+    assert.match(w, /衛授食字第1141417643號/);
+    assert.match(w, /收縮壓 ≥ 180 和\/或舒張壓 ≥ 120 mmHg）、末期腎病或透析病人禁用/);
+    assert.match(w, /PRES／RCVS/);
+    assert.match(w, /未滿 12 歲有腎功能不全或高血壓者，須經醫師評估後謹慎使用/);
+  });
   test('不需要年齡；mL/kg 型不換算 mg', () => {
     range(dose('peace_syrup', 20, null).mlRange, [4, 4], '無年齡');
     assert.equal(dose('peace_syrup', 20).mgRange, undefined);
@@ -1017,8 +1055,8 @@ describe('錠劑往下取到 ¼ 顆', () => {
     assert.deepEqual(dose('acetaminophen_tab', 27).unitRangeRounded, [0.5, 0.75]);
     assert.deepEqual(dose('acetaminophen_tab', 3).unitRangeRounded, [0, 0]);
   });
-  test('Promeran 10 kg：0.26-0.52 → ¼-½；Curam 錠 40 kg：1.71 → 1½', () => {
-    assert.deepEqual(dose('promeran_tab', 10).unitRangeRounded, [0.25, 0.5]);
+  test('Promeran 20 kg：0.52-0.78 → ½-¾；Curam 錠 40 kg：1.71 → 1½', () => {
+    assert.deepEqual(dose('promeran_tab', 20).unitRangeRounded, [0.5, 0.75]);
     assert.deepEqual(dose('curam_tab', 40).unitRangeRounded, [1.5, 1.5]);
   });
   test('所有錠劑（form = tab）在 0.5-120 kg：取整後是 ¼ 的倍數，且不超過算出的顆數', () => {
@@ -1037,6 +1075,12 @@ describe('錠劑往下取到 ¼ 顆', () => {
         }
       }
     }
+  });
+  test('包數往下取 ½ 包（Kiwi 2026-11-05）：Actein 16 kg 0.53 → ½；Smecta 16 kg 0.53 → ½；Actein 3 kg 0.1 → 0', () => {
+    assert.equal(dose('actein_granule', 16).packsPerDoseRounded, 0.5);
+    assert.equal(dose('smecta', 16).packsPerDoseRounded, 0.5);
+    assert.equal(dose('actein_granule', 3).packsPerDoseRounded, 0);
+    assert.equal(dose('smecta', 45).packsPerDoseRounded, 1.5);
   });
   test('膠囊、針劑不取整（Amoxicillin cap、Methylprednisolone Vial）', () => {
     assert.equal(dose('amoxicillin_cap', 20).unitRangeRounded, undefined);
