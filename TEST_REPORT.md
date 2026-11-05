@@ -13,11 +13,11 @@
 | 檔案 | 內容 | 結果 |
 | --- | --- | --- |
 | `tests/calculations.test.js` | 原有測試（Ketamine、Acetaminophen、Ibuprofen、輸入邊界），未改動 | 通過 |
-| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點；另有覆蓋率檢查 | 184 通過 |
-| `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；畫面數字取整 `num()` | 82 通過 |
-| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面 | 16 通過 |
+| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 191 通過 |
+| `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；速算落在範圍內；畫面數字取整 `num()` | 83 通過 |
+| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 18 通過 |
 | `tests/flows.test.js` | PALS 三個流程與 SE 四個階段：順序與 20 kg、3 kg、120 kg 劑量和頁面一致 | 16 通過 |
-| **合計** | | **299 項：299 通過、0 todo、0 失敗** |
+| **合計** | | **309 項：309 通過、0 todo、0 失敗** |
 
 頁面測試需要 Playwright。CI 會臨時安裝（`--no-save`，repo 不新增依賴）；本機沒裝時頁面測試會自動 skip，計算測試照跑。
 
@@ -100,6 +100,20 @@
 - 15 與 15.1 kg 之間（例如 15.05 kg）FDA 表沒有寫；工具歸到 > 15 kg 那組（45 mg）。23、40 kg 附近同理。
 - `peds_drugs.json` 的 `source` 欄已補上：Tamiflu「FDA Tamiflu 仿單 Table 1」、Xofluza「FDA Xofluza 仿單（2025）」、Diazepam IV「AES 2016」。
 - `ml_by_weight_after_dilution` 同樣只回傳數字，畫面也一併改成沿用舊版文字格式（目前沒有藥物用到）。
+
+## 4.1 速算（2026-11-05，Kiwi 指定）
+
+藥卡改成「速算為主、範圍為輔」：有 `calc.quick` 的藥，先用大字顯示單一 mL 數，下面的範圍縮小、改灰色，標為「參考範圍」。
+
+| 藥 | 速算 | 16 kg | 換算 | 上限 |
+| --- | --- | --- | --- | --- |
+| Anti-phen 糖漿（24 mg/mL） | BW÷2 mL | 8 mL | 192 mg = 12 mg/kg | 1000 mg；≥ 83.3 kg 封頂 41.7 mL，畫面標「已達單次上限」 |
+| Ibuprofen（Idefen）糖漿（20 mg/mL） | BW÷2 mL | 8 mL | 160 mg = 10 mg/kg | 400 mg；> 40 kg 封頂 20 mL，畫面標「已達單次上限」 |
+
+- 依據：Kiwi 的初版速算表兩藥都寫「BW/4~BW/2 ml」，Kiwi 指定取 BW/2。Anti-phen 藥卡備註原本就寫「BW÷2 mL = 12 mg/kg/dose」。
+- 速算沿用該藥既有的單次上限；測試確認 0.5-120 kg 的速算都落在參考範圍內、不超過上限。
+- 其他藥目前沒有速算，照舊顯示範圍。Voren、Aswell 要用哪個速算、錠劑是否往下取到 ¼ 顆，尚待 Kiwi 決定。
+- 初版速算表與網頁不一致的單次上限（Anti-phen 10 mL、Ibuprofen 10 mL）**沒有套用**，速算仍用網頁現有的 1000 mg／400 mg。
 
 ## 5. 缺少封頂或邊界可疑的地方（測試記錄現況，未標 todo）
 

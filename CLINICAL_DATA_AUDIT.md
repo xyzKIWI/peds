@@ -39,3 +39,9 @@
 - **Taita 4-2-1 rule**：畫面原本顯示 `undefined`，改為顯示 mL/hr（程式修正，未改數值）。
 
 - **Tamiflu 懸液濃度文字**：`package` 由「60 mg/mL susp」改為「6 mg/mL susp」（FDA 仿單 Table 1：30 mg = 5 mL）。只用於顯示，不參與計算。
+
+## 2026-11-05 速算（Kiwi 指定）
+
+- Anti-phen 糖漿、Ibuprofen（Idefen）糖漿加上速算 `calc.quick`：BW÷2 mL（0.5 mL/kg）。依據為初版速算表「BW/4~BW/2 ml」，Kiwi 指定取 BW/2。換算為 Anti-phen 12 mg/kg、Ibuprofen 10 mg/kg，都在原本的 mg/kg 範圍內。
+- 速算沿用既有單次上限（Anti-phen 1000 mg、Ibuprofen 400 mg），未改任何既有劑量、上限或範圍。
+- 待 Kiwi 決定：Voren、Aswell 的速算；錠劑是否往下取到 ¼ 顆；初版速算表與網頁不一致的項目（Anti-phen／Ibuprofen 單次上限 10 mL、croup epinephrine ≤ 4 歲上限 2.5 mL、Succinylcholine、Lorazepam、Ketamine IM、Peace／Cypromin 年齡分組）。

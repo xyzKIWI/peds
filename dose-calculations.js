@@ -36,6 +36,24 @@
     };
   }
 
+  // 速算（例：BW÷2 mL）：由 Kiwi 指定的 calc.quick.ml_per_kg 換算單一 mL 數，
+  // 仍套用同一規則的單次上下限（max_dose_mg / min_dose_mg）。
+  function quickDose(calc, drug, weight) {
+    const q = calc.quick;
+    const conc = drug.concentration_mg_per_ml;
+    if (!q || !Number.isFinite(q.ml_per_kg) || !(conc > 0)) return null;
+    let ml = weight * q.ml_per_kg;
+    let mg = ml * conc;
+    let capped = false;
+    if (calc.max_dose_mg && mg > calc.max_dose_mg) {
+      mg = calc.max_dose_mg;
+      capped = true;
+    }
+    if (calc.min_dose_mg && mg < calc.min_dose_mg) mg = calc.min_dose_mg;
+    ml = mg / conc;
+    return { label: q.label, ml, mg, mgPerKg: mg / weight, capped };
+  }
+
   function calculateDose(drug, calc, weight, age) {
     if (!calc) return null;
     const t = calc.type;
@@ -66,6 +84,8 @@
       if (drug.concentration_mg_per_unit) {
         result.unitRange = [lowMg / drug.concentration_mg_per_unit, highMg / drug.concentration_mg_per_unit];
       }
+      const quick = quickDose(calc, drug, weight);
+      if (quick) result.quick = quick;
       return result;
     }
 

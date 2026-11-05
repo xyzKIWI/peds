@@ -117,7 +117,11 @@
         "max_dose_mg": 1000,
         "max_doses_per_day": 5,
         "max_mg_per_day": 4000,
-        "max_mg_per_kg_per_day": 75
+        "max_mg_per_kg_per_day": 75,
+        "quick": {
+          "ml_per_kg": 0.5,
+          "label": "BW÷2"
+        }
       },
       "frequency": "Q4-6H PRN",
       "notes": "10-15 mg/kg/dose = BW÷2.4 ~ BW÷1.6 mL/dose；BW÷2 mL = 12 mg/kg/dose。間隔 ≥4 小時；未記錄當日已用量時，須另行核對累計劑量。",
@@ -194,7 +198,11 @@
         "max_dose_mg": 400,
         "max_mg_per_day": 1200,
         "max_ml_per_day": 60,
-        "max_mg_per_kg_per_day": 40
+        "max_mg_per_kg_per_day": 40,
+        "quick": {
+          "ml_per_kg": 0.5,
+          "label": "BW÷2"
+        }
       },
       "frequency": "Q6-8H PRN",
       "notes": "速算: BW÷4 ~ BW÷2 mL/dose；< 6 月禁用；≥ 6 月-12 歲適用",

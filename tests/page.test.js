@@ -168,4 +168,28 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     assert.match(await card.innerText(), /≥5 歲 \+ <20 kg/);
     await context.close();
   });
+  test('速算為主：Anti-phen／Ibuprofen 16 kg 顯示「速算 BW÷2 → 8 mL」，範圍改為參考；120 kg 標示已達上限', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await setWeight(page, 16);
+    await setAge(page, 4);
+    const ibu = page.locator('.drug-card[data-id="idefen_syrup"] .quick-dose');
+    assert.match(await ibu.innerText(), /速算 BW÷2[\s\S]*8\s*mL[\s\S]*160 mg（10 mg\/kg）/);
+    const apap = page.locator('.drug-group .quick-dose').first();
+    assert.match(await apap.innerText(), /速算 BW÷2[\s\S]*8\s*mL[\s\S]*192 mg（12 mg\/kg）/);
+    assert.ok(await page.locator('.dose-row-ref').count() > 0, '範圍列標為參考');
+    await setWeight(page, 120);
+    assert.match(await apap.innerText(), /41\.7\s*mL[\s\S]*已達單次上限 1000 mg/);
+    assert.equal(await hasHorizontalScroll(page), false);
+    await context.close();
+  });
+
+  test('沒有速算的藥照舊顯示範圍（例：Aswell）', async () => {
+    const { page, context } = await openPage(browser);
+    await setWeight(page, 10);
+    const card = page.locator('.drug-card[data-id="aswell_syrup"], .drug-group:has([data-id="aswell_syrup"])').first();
+    assert.equal(await card.count(), 1, '找到 Aswell 卡片');
+    assert.match(await card.innerText(), /Aswell/);
+    assert.equal(await card.locator('.quick-dose').count(), 0);
+    await context.close();
+  });
 });

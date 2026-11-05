@@ -42,6 +42,25 @@ drugSuite('antiphen_syrup', () => {
     range(r.mgRange, [700, 1000], 'mg');
     range(r.mlRange, [700 / 24, 1000 / 24], 'mL');
   });
+  // 速算 BW÷2 mL：Kiwi 2026-11-05 指定（初版速算表「BW/4~BW/2 ml」取 BW/2；藥卡備註「BW÷2 mL = 12 mg/kg/dose」）
+  test('速算 BW÷2：16 kg → 8 mL = 192 mg（12 mg/kg），落在 10-15 mg/kg 範圍內', () => {
+    const q = dose('antiphen_syrup', 16).quick;
+    assert.equal(q.label, 'BW÷2');
+    close(q.ml, 8, 'mL');
+    close(q.mg, 192, 'mg');
+    close(q.mgPerKg, 12, 'mg/kg');
+    assert.equal(q.capped, false);
+  });
+  test('速算 3 kg → 1.5 mL = 36 mg', () => {
+    close(dose('antiphen_syrup', 3).quick.ml, 1.5, 'mL');
+  });
+  test('速算封頂：83.33 kg 起 BW÷2 超過 1000 mg → 封頂 1000 mg = 41.67 mL，capped=true', () => {
+    const q = dose('antiphen_syrup', 120).quick;
+    close(q.mg, 1000, 'mg');
+    close(q.ml, 1000 / 24, 'mL');
+    assert.equal(q.capped, true);
+    assert.equal(dose('antiphen_syrup', 80).quick.capped, false, '80 kg = 960 mg 未封頂');
+  });
   test('每日上限（max_mg_per_day / max_mg_per_kg_per_day / max_doses_per_day）只顯示文字，不參與計算', () => {
     const r = dose('antiphen_syrup', 120);
     range(r.mgRange, [1000, 1000], '單次封頂');
@@ -78,6 +97,26 @@ drugSuite('idefen_syrup', () => {
     const r = dose('idefen_syrup', 50);
     range(r.mgRange, [250, 400], 'mg');
     range(r.mlRange, [12.5, 20], 'mL');
+  });
+  // 速算 BW÷2 mL：Kiwi 2026-11-05 指定（初版速算表「BW/4~BW/2 ml」取 BW/2）
+  test('速算 BW÷2：16 kg → 8 mL = 160 mg（10 mg/kg，範圍上限）', () => {
+    const q = dose('idefen_syrup', 16).quick;
+    close(q.ml, 8, 'mL');
+    close(q.mg, 160, 'mg');
+    close(q.mgPerKg, 10, 'mg/kg');
+  });
+  test('速算 3 kg → 1.5 mL；40 kg 剛好 400 mg = 20 mL（未標封頂）；50 kg 封頂 400 mg = 20 mL', () => {
+    close(dose('idefen_syrup', 3).quick.ml, 1.5, '3 kg');
+    const at40 = dose('idefen_syrup', 40).quick;
+    close(at40.ml, 20, '40 kg');
+    assert.equal(at40.capped, false);
+    const at50 = dose('idefen_syrup', 50).quick;
+    close(at50.ml, 20, '50 kg');
+    assert.equal(at50.capped, true);
+  });
+  test('只有 Kiwi 指定的兩個藥有速算', () => {
+    const withQuick = data.drugs.filter(d => d.calc?.quick || (d.indications || []).some(i => i.calc.quick)).map(d => d.id);
+    assert.deepEqual(withQuick, ['antiphen_syrup', 'idefen_syrup']);
   });
   test('年齡切換點資料：< 6 個月 禁用（畫面行為見 page.test.js）', () => {
     const c = drug('idefen_syrup').contraindications[0];
