@@ -117,7 +117,11 @@
         "max_dose_mg": 1000,
         "max_doses_per_day": 5,
         "max_mg_per_day": 4000,
-        "max_mg_per_kg_per_day": 75
+        "max_mg_per_kg_per_day": 75,
+        "quick": {
+          "ml_per_kg": 0.5,
+          "label": "BW÷2"
+        }
       },
       "frequency": "Q4-6H PRN",
       "notes": "10-15 mg/kg/dose = BW÷2.4 ~ BW÷1.6 mL/dose；BW÷2 mL = 12 mg/kg/dose。間隔 ≥4 小時；未記錄當日已用量時，須另行核對累計劑量。",
@@ -154,7 +158,8 @@
         "type": "mg_per_kg_per_dose",
         "low": 10,
         "high": 15,
-        "max_dose_mg": 1000,
+        "max_dose_mg": 500,
+        "max_dose_source": "藥卡備註「Max 1#/dose」（Kiwi 2026-11-05 確認以備註為準）",
         "max_doses_per_day": 5
       },
       "frequency": "Q4-6H PRN",
@@ -194,7 +199,11 @@
         "max_dose_mg": 400,
         "max_mg_per_day": 1200,
         "max_ml_per_day": 60,
-        "max_mg_per_kg_per_day": 40
+        "max_mg_per_kg_per_day": 40,
+        "quick": {
+          "ml_per_kg": 0.5,
+          "label": "BW÷2"
+        }
       },
       "frequency": "Q6-8H PRN",
       "notes": "速算: BW÷4 ~ BW÷2 mL/dose；< 6 月禁用；≥ 6 月-12 歲適用",
@@ -237,7 +246,12 @@
         "type": "supp_by_weight",
         "kg_per_supp_low": 25,
         "kg_per_supp_high": 12.5,
-        "max_doses_per_day": 2
+        "max_units_per_day": 2,
+        "max_units_source": "藥卡備註「Max 2 顆/日」（Kiwi 2026-11-05 確認以備註為準）",
+        "quick": {
+          "kg_per_unit": 12.5,
+          "label": "BW÷12.5"
+        }
       },
       "frequency": "Q6H PRN",
       "notes": "速算: BW÷25 ~ BW÷12.5 顆；Max 2 顆/日；嬰幼兒退燒備用",
@@ -277,10 +291,17 @@
         "type": "ml_per_kg_per_day",
         "low": 0.6,
         "high": 0.6,
-        "doses_per_day": 3
+        "doses_per_day": 3,
+        "max_ml_per_dose": 10,
+        "max_dose_source": "Actifed 糖漿仿單（NAFDAC 2022，同濃度）：成人及 ≥ 12 歲 10 mL/次，每日最多 40 mL"
       },
       "frequency": "TID PC",
-      "source": "高醫速算表",
+      "warnings": [
+        "食藥署 2025-07-31 公告（衛授食字第1141417643號）：嚴重高血壓（收縮壓 ≥ 180 和/或舒張壓 ≥ 120 mmHg）、末期腎病或透析病人禁用",
+        "曾有 PRES／RCVS 案例報告：出現突發劇烈頭痛、噁心嘔吐、意識混亂、抽搐或視力障礙應立即停藥",
+        "僅限短期使用；未滿 12 歲有腎功能不全或高血壓者，須經醫師評估後謹慎使用"
+      ],
+      "source": "高醫速算表 + 食藥署 pseudoephedrine 仿單修訂公告（2025）",
       "tags": [
         "common",
         "uri"
@@ -309,7 +330,22 @@
         "type": "ml_per_kg_per_day",
         "low": 0.6,
         "high": 0.6,
-        "doses_per_day": 3
+        "doses_per_day": 3,
+        "daily_max_mg_by_age": [
+          {
+            "age_low": 0,
+            "age_high": 7,
+            "max_mg_per_day": 12,
+            "label": "< 7 歲"
+          },
+          {
+            "age_low": 7,
+            "age_high": 999,
+            "max_mg_per_day": 16,
+            "label": "≥ 7 歲"
+          }
+        ],
+        "max_dose_source": "美國仿單 cyproheptadine oral solution 2 mg/5 mL（DailyMed）：2-6 歲每日 ≤ 12 mg；7-14 歲每日 ≤ 16 mg"
       },
       "frequency": "TID PC",
       "notes": "First-gen antihistamine，年紀大可改 cetirizine",
@@ -319,6 +355,14 @@
         "uri"
       ],
       "group_id": "cyproheptadine",
+      "contraindications": [
+        {
+          "type": "age_below_years",
+          "threshold_years": 2,
+          "severity": "不建議",
+          "reason": "< 2 歲安全性與療效未確立；新生兒、早產兒禁用（美國仿單）"
+        }
+      ],
       "kmuh_detail": {
         "臨床用途": "過敏、流鼻水、止癢；亦用於食慾不振",
         "禁忌": "Glaucoma、BPH、MAOI、新生兒",
@@ -831,39 +875,50 @@
       "route": "PO",
       "calc": {
         "type": "weight_band",
+        "upper_inclusive": true,
+        "infant_rule": {
+          "age_below_years": 1,
+          "mg_per_kg_per_dose": 3,
+          "label": "2 週至未滿 1 歲：3 mg/kg BID × 5 days"
+        },
         "bands": [
           {
             "weight_low": 0,
             "weight_high": 15,
-            "dose": "30 mg BID × 5 days"
+            "dose": "30 mg BID × 5 days",
+            "mg_per_dose": 30
           },
           {
             "weight_low": 15,
             "weight_high": 23,
-            "dose": "45 mg BID × 5 days"
+            "dose": "45 mg BID × 5 days",
+            "mg_per_dose": 45
           },
           {
             "weight_low": 23,
             "weight_high": 40,
-            "dose": "60 mg BID × 5 days"
+            "dose": "60 mg BID × 5 days",
+            "mg_per_dose": 60
           },
           {
             "weight_low": 40,
             "weight_high": 999,
-            "dose": "75 mg BID × 5 days"
+            "dose": "75 mg BID × 5 days",
+            "mg_per_dose": 75
           }
         ]
       },
       "frequency": "BID × 5 days",
       "notes": "症狀 48 小時內開始最有效；參考台灣兒科醫學會抗病毒藥物使用建議",
-      "source": "Lexicomp / Taiwan Pediatric Society",
+      "source": "Lexicomp / Taiwan Pediatric Society + FDA Tamiflu 仿單 Table 1",
       "tags": [
         "common",
         "flu",
         "starred_default",
         "uri"
       ],
-      "package": "cap 30/45/75 mg / 60 mg/mL susp",
+      "package": "cap 30/45/75 mg / 6 mg/mL susp",
+      "suspension_mg_per_ml": 6,
       "contraindications": [
         {
           "type": "age_below_weeks",
@@ -941,7 +996,8 @@
           {
             "weight_low": 0,
             "weight_high": 20,
-            "dose": "≥1 歲 + <20 kg：2 mg/kg PO single dose"
+            "dose": "≥5 歲 + <20 kg：2 mg/kg PO single dose（FDA 仿單 <20 kg 用懸液）",
+            "mg_per_kg_per_dose": 2
           },
           {
             "weight_low": 20,
@@ -956,27 +1012,27 @@
         ]
       },
       "frequency": "Single dose × 1",
-      "notes": "≥1 歲適用；單次口服即可（療程結束）；勿與 dairy/calcium 同服（吸收下降）",
+      "notes": "≥5 歲適用；單次口服即可（療程結束）；勿與 dairy/calcium 同服（吸收下降）",
       "warnings": [
         "症狀 48 小時內服用最有效"
       ],
-      "source": "Lexicomp + 高醫藥品庫",
+      "source": "Lexicomp + 高醫藥品庫 + FDA Xofluza 仿單（2025）",
       "tags": [
         "flu"
       ],
       "contraindications": [
         {
-          "type": "age_below_months",
-          "threshold_months": 12,
+          "type": "age_below_years",
+          "threshold_years": 5,
           "severity": "不建議",
-          "reason": "< 1 歲安全性資料不足"
+          "reason": "< 5 歲不在 FDA 仿單適用範圍（仿單：≥ 5 歲）"
         }
       ],
       "kmuh_detail": {
         "臨床用途": "Influenza A/B 治療（單次口服）",
         "禁忌": "Baloxavir 過敏",
         "副作用": "腹瀉、頭痛（少見）",
-        "警語": "≥1 歲適用；勿與含鈣 / 鎂 / 鐵製品併服（吸收↓）",
+        "警語": "≥5 歲適用；勿與含鈣 / 鎂 / 鐵製品併服（吸收↓）",
         "懷孕分級": "—（資料不足）",
         "授乳": "資料不足",
         "管制性藥品": "—"
@@ -1330,16 +1386,21 @@
       "calc": {
         "type": "mg_per_kg_per_dose",
         "low": 0.1,
-        "high": 0.2,
+        "high": 0.15,
         "max_dose_mg": 10,
-        "doses_per_day": 3
+        "max_mg_per_kg_per_day": 0.5,
+        "doses_per_day": 3,
+        "quick": {
+          "ml_per_kg": 0.1,
+          "label": "BW÷10"
+        }
       },
       "frequency": "TID PC PRN",
       "notes": "注意 EPS 副作用，可與 diphenhydramine 並用預防",
       "warnings": [
         "EPS"
       ],
-      "source": "高醫速算表",
+      "source": "高醫速算表 + EMA 2013 metoclopramide 兒童使用限制",
       "tags": [
         "age"
       ],
@@ -1348,8 +1409,8 @@
         {
           "type": "age_below_months",
           "threshold_months": 12,
-          "severity": "慎用",
-          "reason": "< 1 歲 EPS 風險高"
+          "severity": "禁用",
+          "reason": "< 1 歲禁用（EMA 2013 兒童使用限制；EPS 風險）"
         }
       ],
       "kmuh_detail": {
@@ -1375,15 +1436,24 @@
       "calc": {
         "type": "mg_per_kg_per_dose",
         "low": 0.1,
-        "high": 0.2,
-        "max_dose_mg": 10
+        "high": 0.15,
+        "max_dose_mg": 10,
+        "max_mg_per_kg_per_day": 0.5
       },
       "frequency": "TID PC PRN",
       "warnings": [
         "EPS 副作用 — 兒童風險高，可與 diphenhydramine 並用預防"
       ],
-      "source": "Lexicomp + 高醫藥品庫",
+      "source": "Lexicomp + 高醫藥品庫 + EMA 2013 metoclopramide 兒童使用限制",
       "group_id": "metoclopramide",
+      "contraindications": [
+        {
+          "type": "age_below_months",
+          "threshold_months": 12,
+          "severity": "禁用",
+          "reason": "< 1 歲禁用（EMA 2013 兒童使用限制；EPS 風險）"
+        }
+      ],
       "kmuh_detail": {
         "臨床用途": "Nausea / vomiting",
         "禁忌": "GI 阻塞 / 穿孔、tardive dyskinesia 病史",
@@ -1407,14 +1477,15 @@
       "calc": {
         "type": "mg_per_kg_per_dose",
         "low": 0.1,
-        "high": 0.2,
-        "max_dose_mg": 10
+        "high": 0.15,
+        "max_dose_mg": 10,
+        "max_mg_per_kg_per_day": 0.5
       },
       "frequency": "Q6-8H PRN",
       "warnings": [
         "EPS — 常與 diphenhydramine (Vena) 並用"
       ],
-      "source": "高醫速算表",
+      "source": "高醫速算表 + EMA 2013 metoclopramide 兒童使用限制",
       "tags": [
         "age"
       ],
@@ -1423,8 +1494,8 @@
         {
           "type": "age_below_months",
           "threshold_months": 12,
-          "severity": "慎用",
-          "reason": "< 1 歲 EPS 風險高"
+          "severity": "禁用",
+          "reason": "< 1 歲禁用（EMA 2013 兒童使用限制；EPS 風險）"
         }
       ],
       "kmuh_detail": {
@@ -1580,7 +1651,8 @@
           {
             "age_low": 0,
             "age_high": 2,
-            "dose": "BW÷20 # TID-QID"
+            "dose": "BW÷20 # TID-QID",
+            "kg_per_unit": 20
           },
           {
             "age_low": 2,
@@ -1851,7 +1923,9 @@
           "calc": {
             "type": "mg_per_kg_per_dose",
             "low": 3,
-            "high": 4
+            "high": 4,
+            "max_dose_mg": 150,
+            "max_dose_source": "FDA Anectine 仿單：IM 3-4 mg/kg，總量不超過 150 mg"
           },
           "frequency": "ST"
         }
@@ -2023,13 +2097,13 @@
       "route": "IV",
       "calc": {
         "type": "mg_per_kg_per_dose",
-        "low": 0.2,
-        "high": 0.3,
+        "low": 0.15,
+        "high": 0.2,
         "max_dose_mg": 10
       },
       "frequency": "Slow IV push (over 2-3 min)，5 min 可 repeat",
       "notes": "Status epilepticus 替代藥（首選 lorazepam）",
-      "source": "Lexicomp",
+      "source": "Lexicomp + AES 2016",
       "tags": [],
       "group_id": "diazepam",
       "kmuh_detail": {

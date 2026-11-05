@@ -28,3 +28,50 @@
 - Acetaminophen、Ibuprofen、Curam 與第二批藥品仍需逐項核對岡山院內規格與現行 protocol。
 
 此記錄無病人識別資料。「快捷預設」與「可查閱參考範圍」已分開，未確認項目不轉成一鍵給藥結果。
+
+## 2026-11-04 依出處修正（Kiwi 確認）
+
+驗算測試（`TEST_REPORT.md`）發現與出處不一致，經 Kiwi 確認後修正：
+
+- **Tamiflu**：依 FDA 仿單 Table 1，體重分組改為「15 kg or less／15.1-23／23.1-40／40.1 kg or more」（資料加 `upper_inclusive`）；2 週至未滿 1 歲改為 3 mg/kg BID（資料加 `infant_rule`），因此需先輸入年齡。
+- **Xofluza**：依 FDA 仿單（2025）適用 ≥ 5 歲；分組文字、notes、警語由「≥1 歲」改為「≥5 歲」，禁忌由 < 12 個月改為 < 5 歲「不建議」。
+- **Diazepam IV**：依 AES 2016（SE 頁引用的流程圖）由 0.2-0.3 mg/kg 改為 0.15-0.2 mg/kg，max 10 mg 不變。
+- **Taita 4-2-1 rule**：畫面原本顯示 `undefined`，改為顯示 mL/hr（程式修正，未改數值）。
+
+- **Tamiflu 懸液濃度文字**：`package` 由「60 mg/mL susp」改為「6 mg/mL susp」（FDA 仿單 Table 1：30 mg = 5 mL）。只用於顯示，不參與計算。
+
+## 2026-11-05 速算（Kiwi 指定）
+
+- Anti-phen 糖漿、Ibuprofen（Idefen）糖漿加上速算 `calc.quick`：BW÷2 mL（0.5 mL/kg）。依據為初版速算表「BW/4~BW/2 ml」，Kiwi 指定取 BW/2。換算為 Anti-phen 12 mg/kg、Ibuprofen 10 mg/kg，都在原本的 mg/kg 範圍內。
+- 速算沿用既有單次上限（Anti-phen 1000 mg、Ibuprofen 400 mg），未改任何既有劑量、上限或範圍。
+- 待 Kiwi 決定：Voren、Aswell 的速算；錠劑是否往下取到 ¼ 顆；初版速算表與網頁不一致的項目（Anti-phen／Ibuprofen 單次上限 10 mL、croup epinephrine ≤ 4 歲上限 2.5 mL、Succinylcholine、Lorazepam、Ketamine IM、Peace／Cypromin 年齡分組）。
+
+## 2026-11-05 速算第二批、錠劑取整、Succinylcholine IM 上限（Kiwi 指定）
+
+- **Voren 栓劑**速算 BW÷12.5 顆（= 1 mg/kg/次）。Kiwi：臨床上都這樣給。參考：Voltarol 12.5 mg 仿單（HPRA）≥ 1 歲每天 0.5-2 mg/kg，分 2-3 次，每天最多 150 mg。
+- **Aswell 糖漿**速算 BW÷10 mL（= 0.1 mg/kg/次）。參考：EMA 2013／MHRA，≥ 1 歲 0.1-0.15 mg/kg，一天最多 3 次，每天 ≤ 0.5 mg/kg。
+- **Succinylcholine RSI IM** 加上單次上限 150 mg。依據：FDA Anectine 仿單（2022）IM 3-4 mg/kg，「not more than 150 mg total dose」。
+- **錠劑往下取到 ¼ 顆**：依 Kiwi 初版速算表「請開不超過表上的數值且容易給予的劑量，ex: 0.8 粒 → 0.75 粒」。只限 `form: tab`，膠囊、栓劑、針劑不取整。
+- 未改任何既有 mg/kg 範圍。
+
+## 2026-11-05 Peace、Cypromin 上限（Kiwi 指定）
+
+- **Peace 糖漿**：單次上限 10 mL（`calc.max_ml_per_dose`）。出處：Actifed 糖漿仿單（NAFDAC 2022；pseudoephedrine 30 mg + triprolidine 1.25 mg / 5 mL，與 Peace 同濃度）成人及 ≥ 12 歲 10 mL 每 4-6 小時，每日最多 40 mL。該仿單沒有 < 12 歲劑量。
+- **Cypromin 糖漿**：依年齡加每日上限（`calc.daily_max_mg_by_age`）：< 7 歲 12 mg/day、≥ 7 歲 16 mg/day；加禁忌「< 2 歲不建議」。出處：DailyMed cyproheptadine oral solution 2 mg/5 mL（2024-06）：每日約 0.25 mg/kg；2-6 歲每次 2 mg，每日 ≤ 12 mg；7-14 歲每次 4 mg，每日 ≤ 16 mg；< 2 歲安全性未確立；新生兒、早產兒禁用。> 14 歲沿用 16 mg。
+- 參考（未改網頁）：食藥署 2025-07-31 衛授食字第1141417643號，含 pseudoephedrine 處方藥仿單須於 2026-05-31 前加刊：嚴重高血壓（≥ 180/120 mmHg）、末期腎病或透析禁用；PRES／RCVS 警語；僅限短期使用；未滿 12 歲有腎功能不全或高血壓者須經醫師評估後謹慎使用。
+
+## 2026-11-05 第三批（Kiwi 指定）
+
+- **Metoclopramide（Aswell、Primperan、Promeran）**：範圍 0.1-0.2 → 0.1-0.15 mg/kg；加 `max_mg_per_kg_per_day` 0.5（顯示用）；< 1 歲改為「禁用」（Promeran 新增此禁忌）。出處：EMA 2013 metoclopramide referral、英國 MHRA Drug Safety Update：≥ 1 歲 0.1-0.15 mg/kg，一天最多 3 次，每日 ≤ 0.5 mg/kg；< 1 歲禁用。Aswell 速算 BW÷10 不變。
+- **Peace**：加 3 條警語，出處：食藥署 2025-07-31 衛授食字第1141417643號（含 pseudoephedrine 處方藥仿單修訂）。
+- **初版速算表與網頁不一致的項目，Kiwi 確認維持網頁**：Anti-phen／Ibuprofen 單次上限、croup epinephrine 0.5 mL/kg 上限 5 mL、Lorazepam 0.1 mg/kg 上限 4 mg、Ketamine IM 初始 4、追加 2 mg/kg。
+- **Xofluza < 20 kg**：算出 mg 與錠數；分組文字加註「FDA 仿單 <20 kg 用懸液」。
+- **MgO < 2 歲**：BW÷20 # 算出顆數。
+- **Tamiflu**：加 `suspension_mg_per_ml` 6 與各組 `mg_per_dose`，顯示懸液 mL（FDA 仿單 Table 1）。
+- **栓劑、包數往下取 ½**（Voren、Actein、Smecta），錠劑維持 ¼。
+
+## 2026-11-05 最後決定（Kiwi）
+
+- **Voren 栓劑**：以藥卡備註「Max 2 顆/日」為準，`max_doses_per_day: 2` 改為 `max_units_per_day: 2`；單次也不超過 2 顆。
+- **Acetaminophen 錠**：以藥卡備註「Max 1#/dose」為準，`max_dose_mg` 1000 改為 500。
+- **其餘待決項目維持現狀**（見 TEST_REPORT.md 4.3）。

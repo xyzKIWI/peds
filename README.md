@@ -23,8 +23,10 @@ node scripts/sync-data.mjs
 node scripts/validate-data.mjs
 node scripts/sync-data.mjs --check
 node scripts/check-html-js.mjs
-node tests/calculations.test.js
+node --test
 ```
+
+`node --test` 會跑 `tests/` 底下全部驗算測試；頁面與 PALS／SE 流程測試需要 Playwright，本機沒裝時自動略過，GitHub Actions 每次 push 與 PR 都會完整跑。結果與待確認項目見 `TEST_REPORT.md`。
 
 `rewrite_clinical_summary.py` 只補上尚未建立的 `kmuh_detail`，不會覆寫已審核內容。Windows 下以 UTF-8 讀寫。
 
