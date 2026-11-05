@@ -77,7 +77,7 @@
 - 禁忌切換點：Ibuprofen 5 個月禁用並隱藏數字、6 個月顯示；Ketamine 2 個月禁用、3 個月顯示；Novamin 1.9 歲禁用、2 歲顯示。
 - Ketamine 處置鎮靜預設途徑為 IM（頁面下拉選單實測）。
 - 供應狀態非 available 的品項（Thiopental、Chloral hydrate、舊 Midatin）不顯示快捷數字。
-- 頁尾：免責聲明與 `_meta.disclaimer` 一字不差；來源與 `_meta.primary_source`、`se_algorithm.citation` 一致；保留校對日；回入口連結在 er.kiwi-ai.uk 為 `../`、在 github.io 為 `/ed-tools/`；14 個分頁在 375 px 與 1280 px 都沒有水平捲動。
+- 頁尾：採用 main 已合併的 PR #2 版本（本 PR 原本的頁尾已移除，避免重複）。測試確認免責聲明包含 `_meta.disclaimer` 原文、列出資料來源、校對日與 `_meta.last_updated` 一致、只有一份頁尾；回入口連結在 er.kiwi-ai.uk 為 `../`、在 github.io 為 `/ed-tools/`；14 個分頁在 375 px 與 1280 px 都沒有水平捲動。
 
 ## 4. 和出處不一致的地方（2026-11-04 已修正）
 

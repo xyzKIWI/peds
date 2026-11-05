@@ -395,45 +395,17 @@ button.export-btn {
   font-size: 11px;
   padding: 20px 0;
 }
-.page-footer {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-.page-footer .disclaimer {
-  text-align: left;
-}
-.footer-sources {
-  text-align: left;
+.page-foot { margin: 8px 0 0; }
+.page-foot .disclaimer { line-height: 1.6; }
+.back-home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--muted);
-  font-size: 12px;
-}
-.footer-sources-title {
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.footer-sources ul {
-  margin: 0;
-  padding-left: 18px;
-}
-.footer-sources li {
-  margin-bottom: 2px;
-}
-.page-footer .footer-info {
-  padding: 12px 0 4px;
-}
-.back {
-  display: inline-block;
-  margin: 4px 0 0;
-  padding: 8px 4px;
-  color: var(--accent);
-  text-decoration: none;
   font-size: 13px;
+  text-decoration: none;
 }
-.back:hover, .back:focus-visible { text-decoration: underline; }
+.back-home:hover { text-decoration: underline; }
 @media (min-width: 700px) {
   .drug-list-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .drug-list-grid .drug-card { margin-bottom: 0; }
@@ -837,21 +809,17 @@ button.export-btn {
 <main>
   <div id="weight-summary"></div>
   <div id="drug-list"></div>
-  <footer class="page-footer">
-    <!-- 文字由 DRUG_DATA._meta.disclaimer 帶入（唯一來源）；此處靜態副本須與 _meta 完全一致，供 JS 失效時顯示 -->
-    <div class="disclaimer" id="disclaimer" role="note">個人速算工具。僅供臨床醫師快速參考，最終劑量以主治醫師臨床判斷為準。藥碼以高醫 HIS 為準，請於開藥前再次核對。</div>
-    <div class="footer-sources" id="footer-sources">
-      <div class="footer-sources-title">📚 資料來源</div>
-      <ul>
-        <li id="src-primary">Lexicomp / Nelson / UpToDate, cross-referenced with 高醫速算表 (初版) and 小兒常用藥丹</li>
-        <li id="src-pals">PALS 流程：AHA/AAP 2025 PALS Guidelines (Lasa et al., Circulation 2025)，DOI 10.1161/CIR.0000000000001368</li>
-        <li id="src-se">SE 流程：Glauser T, Shinnar S, Gloss D, et al. Evidence-Based Guideline: Treatment of Convulsive Status Epilepticus in Children and Adults. Epilepsy Currents 2016;16(1):48-61.</li>
-        <li>各藥卡的 📚 標示該藥的個別出處。</li>
-      </ul>
+  <div class="footer-info">⭐ 釘選只儲存藥品偏好；體重與年齡不會帶到下一位病人 · 資料查核：2026-09-21</div>
+  <!-- 標準頁尾（ed-tool-template 格式）：免責＋資料來源；文字取自 peds_drugs.json 的 _meta -->
+  <div class="page-foot">
+    <div class="disclaimer">
+      ⚠️ <b>免責：</b>本工具僅供臨床決策輔助參考，不取代臨床判斷、官方仿單與最新指引，使用前請自行核對原始資料來源。
+      個人速算工具。僅供臨床醫師快速參考，最終劑量以主治醫師臨床判斷為準。藥碼以高醫 HIS 為準，請於開藥前再次核對。<br>
+      <b>資料來源：</b>Lexicomp / Nelson / UpToDate，並與高醫速算表（初版）及小兒常用藥丹交叉核對；各藥卡下方另列 📚 個別來源。（資料查核：2026-09-21）
     </div>
-    <div class="footer-info">⭐ 釘選只儲存藥品偏好；體重與年齡不會帶到下一位病人 · 資料查核：2026-09-21</div>
-    <a class="back" id="back-home" href="../">← 回急診臨床小工具</a>
-  </footer>
+    <a class="back-home" id="back-home" href="../">← 回急診臨床小工具</a>
+    <script>if (location.hostname.endsWith('github.io')) document.getElementById('back-home').href = '/ed-tools/';</script>
+  </div>
 </main>
 
 <script src="dose-calculations.js"></script>
@@ -1935,13 +1903,6 @@ document.getElementById('drug-list').addEventListener('change', e => {
 // 版號唯一來源 = DRUG_DATA._meta.version（改資料時只改 _meta，header 自動跟上）
 document.getElementById('appver').textContent = 'v' + (DRUG_DATA._meta.version || '?');
 
-// 頁尾：免責聲明與資料來源一律取自資料檔（_meta / se_algorithm），不另寫文字
-if (DRUG_DATA._meta.disclaimer) document.getElementById('disclaimer').textContent = DRUG_DATA._meta.disclaimer;
-if (DRUG_DATA._meta.primary_source) document.getElementById('src-primary').textContent = DRUG_DATA._meta.primary_source;
-if (DRUG_DATA.se_algorithm?.citation) document.getElementById('src-se').textContent = 'SE 流程：' + DRUG_DATA.se_algorithm.citation;
-
-// er.kiwi-ai.uk／pages.dev 的上一層就是入口；github.io 版入口在 /ed-tools/
-if (location.hostname.endsWith('github.io')) document.getElementById('back-home').href = '/ed-tools/';
 
 // Initial render
 render();

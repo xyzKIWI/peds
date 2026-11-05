@@ -7,18 +7,20 @@ const { describe, test, before, after } = require('node:test');
 const { assert, data, html } = require('./helpers.js');
 const { playwright, launch, openPage, setWeight, setAge, openView, hasHorizontalScroll } = require('./e2e-helpers.js');
 
-describe('頁尾靜態內容（不需瀏覽器）', () => {
-  test('HTML 內的免責聲明靜態副本與 _meta.disclaimer 完全一致', () => {
-    const m = html.match(/<div class="disclaimer" id="disclaimer"[^>]*>([^<]*)<\/div>/);
-    assert.ok(m, '找不到 #disclaimer');
-    assert.equal(m[1], data._meta.disclaimer);
+describe('頁尾靜態內容（不需瀏覽器；頁尾來自 main 的 PR #2）', () => {
+  const foot = html.slice(html.indexOf('<div class="page-foot">'), html.indexOf('</main>'));
+  test('頁尾免責聲明包含 _meta.disclaimer 原文', () => {
+    assert.ok(foot.length > 0, '找不到 .page-foot');
+    assert.ok(foot.includes(data._meta.disclaimer));
   });
-  test('HTML 內的來源靜態副本與 _meta.primary_source、se_algorithm.citation 一致', () => {
-    assert.ok(html.includes(`<li id="src-primary">${data._meta.primary_source}</li>`));
-    assert.ok(html.includes(`<li id="src-se">SE 流程：${data.se_algorithm.citation}</li>`));
+  test('頁尾列出資料來源，校對日與 _meta.last_updated 一致', () => {
+    assert.match(foot, /資料來源：<\/b>Lexicomp \/ Nelson \/ UpToDate/);
+    assert.ok(foot.includes(`資料查核：${data._meta.last_updated}`));
+    assert.ok(html.includes(`資料查核：${data._meta.last_updated}</div>`), '原本的校對日頁尾仍在');
   });
-  test('保留原本的校對日頁尾，日期與 _meta.last_updated 一致', () => {
-    assert.ok(html.includes(`資料查核：${data._meta.last_updated}</div>`));
+  test('頁尾只有一份（沒有重複的免責聲明或回入口連結）', () => {
+    assert.equal(html.split('id="back-home"').length - 1, 1);
+    assert.equal(html.split(data._meta.disclaimer).length - 1, 1 + 1, '頁尾一次＋內嵌 DRUG_DATA 一次');
   });
 });
 
@@ -27,15 +29,12 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
   before(async () => { browser = await launch(); });
   after(async () => { await browser?.close(); });
 
-  test('頁尾顯示免責聲明（_meta 原文）、資料來源與校對日', async () => {
+  test('頁尾顯示免責聲明（含 _meta 原文）與資料來源', async () => {
     const { page, context, errors } = await openPage(browser);
-    assert.equal(await page.textContent('#disclaimer'), data._meta.disclaimer);
-    assert.ok(await page.isVisible('#disclaimer'));
-    const sources = await page.$$eval('#footer-sources li', items => items.map(li => li.textContent));
-    assert.equal(sources[0], data._meta.primary_source);
-    assert.ok(sources.some(s => s.includes('AHA/AAP 2025 PALS')));
-    assert.ok(sources.some(s => s.includes(data.se_algorithm.citation)));
-    assert.match(await page.textContent('.page-footer .footer-info'), /資料查核：2026-09-21/);
+    const text = await page.textContent('.page-foot .disclaimer');
+    assert.ok(text.includes(data._meta.disclaimer));
+    assert.match(text, /資料來源：/);
+    assert.ok(await page.isVisible('.page-foot .disclaimer'));
     assert.deepEqual(errors, []);
     await context.close();
   });
