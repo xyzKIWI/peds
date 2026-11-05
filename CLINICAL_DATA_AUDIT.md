@@ -53,3 +53,9 @@
 - **Succinylcholine RSI IM** 加上單次上限 150 mg。依據：FDA Anectine 仿單（2022）IM 3-4 mg/kg，「not more than 150 mg total dose」。
 - **錠劑往下取到 ¼ 顆**：依 Kiwi 初版速算表「請開不超過表上的數值且容易給予的劑量，ex: 0.8 粒 → 0.75 粒」。只限 `form: tab`，膠囊、栓劑、針劑不取整。
 - 未改任何既有 mg/kg 範圍。
+
+## 2026-11-05 Peace、Cypromin 上限（Kiwi 指定）
+
+- **Peace 糖漿**：單次上限 10 mL（`calc.max_ml_per_dose`）。出處：Actifed 糖漿仿單（NAFDAC 2022；pseudoephedrine 30 mg + triprolidine 1.25 mg / 5 mL，與 Peace 同濃度）成人及 ≥ 12 歲 10 mL 每 4-6 小時，每日最多 40 mL。該仿單沒有 < 12 歲劑量。
+- **Cypromin 糖漿**：依年齡加每日上限（`calc.daily_max_mg_by_age`）：< 7 歲 12 mg/day、≥ 7 歲 16 mg/day；加禁忌「< 2 歲不建議」。出處：DailyMed cyproheptadine oral solution 2 mg/5 mL（2024-06）：每日約 0.25 mg/kg；2-6 歲每次 2 mg，每日 ≤ 12 mg；7-14 歲每次 4 mg，每日 ≤ 16 mg；< 2 歲安全性未確立；新生兒、早產兒禁用。> 14 歲沿用 16 mg。
+- 參考（未改網頁）：食藥署 2025-07-31 衛授食字第1141417643號，含 pseudoephedrine 處方藥仿單須於 2026-05-31 前加刊：嚴重高血壓（≥ 180/120 mmHg）、末期腎病或透析禁用；PRES／RCVS 警語；僅限短期使用；未滿 12 歲有腎功能不全或高血壓者須經醫師評估後謹慎使用。

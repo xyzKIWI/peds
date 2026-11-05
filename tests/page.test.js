@@ -216,4 +216,22 @@ describe('頁面（瀏覽器）', { skip: playwright ? false : '未安裝 Playwr
     assert.equal(await hasHorizontalScroll(page), false);
     await context.close();
   });
+  test('Peace 60 kg 顯示 10 mL 與「已達上限」；Cypromin 糖漿沒輸入年齡時要求年齡', async () => {
+    const { page, context } = await openPage(browser, { width: 375 });
+    await setWeight(page, 60);
+    const peace = page.locator('.drug-card[data-id="peace_syrup"]');
+    let text = await peace.innerText();
+    assert.match(text, /10\s*mL/);
+    assert.match(text, /已達上限/);
+    assert.match(text, /單次上限 10 mL/);
+    await page.fill('#search', 'cypromin');
+    const syrup = page.locator('.drug-group-form[data-id="cypromin_syrup"]');
+    assert.match(await syrup.innerText(), /輸入年齡後計算/);
+    await setAge(page, 5);
+    text = await syrup.innerText();
+    assert.match(text, /10\s*mL/);
+    assert.match(text, /每日上限 < 7 歲 12 mg、≥ 7 歲 16 mg/);
+    assert.equal(await hasHorizontalScroll(page), false);
+    await context.close();
+  });
 });

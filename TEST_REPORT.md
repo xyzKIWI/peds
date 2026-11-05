@@ -13,11 +13,11 @@
 | 檔案 | 內容 | 結果 |
 | --- | --- | --- |
 | `tests/calculations.test.js` | 原有測試（Ketamine、Acetaminophen、Ibuprofen、輸入邊界），未改動 | 通過 |
-| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 201 通過 |
+| `tests/drugs.test.js` | 68 個藥物逐一驗算：出處範例、3 kg、一般體重、封頂、mL／顆數換算、年齡／體重切換點、速算；另有覆蓋率檢查 | 204 通過 |
 | `tests/inputs.test.js` | 全藥物缺值、0、負數、NaN、極端值掃描；上限不被突破；速算落在範圍內；畫面數字取整 `num()` | 83 通過 |
-| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 20 通過 |
+| `tests/page.test.js` | 頁尾免責聲明／來源／校對日、回入口連結（含 github.io）、375 px 與 1280 px 無水平捲動、禁忌切換點、供應狀態、Taita／Tamiflu／Xofluza 修正後畫面、速算顯示 | 21 通過 |
 | `tests/flows.test.js` | PALS 三個流程與 SE 四個階段：順序與 20 kg、3 kg、120 kg 劑量和頁面一致 | 16 通過 |
-| **合計** | | **321 項：321 通過、0 todo、0 失敗** |
+| **合計** | | **325 項：325 通過、0 todo、0 失敗** |
 
 頁面測試需要 Playwright。CI 會臨時安裝（`--no-save`，repo 不新增依賴）；本機沒裝時頁面測試會自動 skip，計算測試照跑。
 
@@ -117,6 +117,8 @@
 - Voren、Aswell 速算由 Kiwi 2026-11-05 指定（Voren：臨床常用 BW÷12.5；Aswell：BW÷10，即 0.1 mg/kg，在 EMA 2013 兒童 0.1-0.15 mg/kg 內）。其他藥沒有速算，照舊顯示範圍。
 - **錠劑往下取到 ¼ 顆**（Kiwi 指定，依初版速算表規則）：`form` 為 tab 且有算出顆數的 9 個錠劑，大字顯示取整結果（例：27 kg Acetaminophen 錠 ½-¾ 錠），小字保留算出的原始顆數；算出不足 ¼ 顆時顯示「不足 ¼」。膠囊、栓劑、針劑不取整。
 - **Succinylcholine IM 上限 150 mg**（Kiwi 指定，依 FDA Anectine 仿單「not more than 150 mg total dose」）。
+- **Peace 單次上限 10 mL**（Kiwi 指定）：出處為 Actifed 糖漿仿單（NAFDAC 2022，同濃度），成人及 ≥ 12 歲 10 mL/次。50 kg 起封頂，畫面標「已達上限」。
+- **Cypromin 糖漿每日上限**（Kiwi 指定）：< 7 歲 12 mg/day（單次 10 mL）、≥ 7 歲 16 mg/day（單次 13.3 mL），出處為美國仿單 cyproheptadine oral solution 2 mg/5 mL（DailyMed）2-6 歲 ≤ 12 mg、7-14 歲 ≤ 16 mg；> 14 歲沿用 16 mg（與 Cypromin 錠一致）。加「< 2 歲不建議」。**Cypromin 糖漿現在需要先輸入年齡**。
 - 初版速算表與網頁不一致的單次上限（Anti-phen 10 mL、Ibuprofen 10 mL）**沒有套用**，速算仍用網頁現有的 1000 mg／400 mg。
 
 ## 5. 缺少封頂或邊界可疑的地方（測試記錄現況，未標 todo）
@@ -134,8 +136,8 @@
 | 藥物 | 規則 | 120 kg 結果 |
 | --- | --- | --- |
 | Voren 栓劑 | BW÷25 ~ BW÷12.5 顆 | 4.8-9.6 顆 |
-| Peace／Soltan（0.6 mL/kg/day）、Secorine／Glyo（1 mL/kg/day） | ÷ 3 | 24 mL、40 mL/dose |
-| Cypromin 糖漿 | 0.6 mL/kg/day ÷ 3 | 24 mL/dose；換算 **28.8 mg/day**，但同成分的 Cypromin 錠有 16 mg/day 上限（100 kg 時糖漿已經是 24 mg/day；糖漿在 > 66.7 kg 就超過 16 mg/day） |
+| Soltan（0.6 mL/kg/day）、Secorine／Glyo（1 mL/kg/day）（Peace 已加 10 mL 上限） | ÷ 3 | 24 mL、40 mL/dose |
+| ~~Cypromin 糖漿~~（已加每日上限，見 4.1） | 0.6 mL/kg/day ÷ 3 | 原本 24 mL/dose；換算 **28.8 mg/day**，但同成分的 Cypromin 錠有 16 mg/day 上限（100 kg 時糖漿已經是 24 mg/day；糖漿在 > 66.7 kg 就超過 16 mg/day） |
 | Actein 顆粒 | 1 包/10 kg/day ÷ 3 | 4 包/dose |
 | Smecta | BW÷30 包 | 4 包/dose |
 | Glycerin | 0.5 mL/kg | 60 mL |

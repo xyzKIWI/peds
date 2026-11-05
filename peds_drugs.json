@@ -289,7 +289,9 @@
         "type": "ml_per_kg_per_day",
         "low": 0.6,
         "high": 0.6,
-        "doses_per_day": 3
+        "doses_per_day": 3,
+        "max_ml_per_dose": 10,
+        "max_dose_source": "Actifed 糖漿仿單（NAFDAC 2022，同濃度）：成人及 ≥ 12 歲 10 mL/次，每日最多 40 mL"
       },
       "frequency": "TID PC",
       "source": "高醫速算表",
@@ -321,7 +323,22 @@
         "type": "ml_per_kg_per_day",
         "low": 0.6,
         "high": 0.6,
-        "doses_per_day": 3
+        "doses_per_day": 3,
+        "daily_max_mg_by_age": [
+          {
+            "age_low": 0,
+            "age_high": 7,
+            "max_mg_per_day": 12,
+            "label": "< 7 歲"
+          },
+          {
+            "age_low": 7,
+            "age_high": 999,
+            "max_mg_per_day": 16,
+            "label": "≥ 7 歲"
+          }
+        ],
+        "max_dose_source": "美國仿單 cyproheptadine oral solution 2 mg/5 mL（DailyMed）：2-6 歲每日 ≤ 12 mg；7-14 歲每日 ≤ 16 mg"
       },
       "frequency": "TID PC",
       "notes": "First-gen antihistamine，年紀大可改 cetirizine",
@@ -331,6 +348,14 @@
         "uri"
       ],
       "group_id": "cyproheptadine",
+      "contraindications": [
+        {
+          "type": "age_below_years",
+          "threshold_years": 2,
+          "severity": "不建議",
+          "reason": "< 2 歲安全性與療效未確立；新生兒、早產兒禁用（美國仿單）"
+        }
+      ],
       "kmuh_detail": {
         "臨床用途": "過敏、流鼻水、止癢；亦用於食慾不振",
         "禁忌": "Glaucoma、BPH、MAOI、新生兒",

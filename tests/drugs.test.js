@@ -151,8 +151,6 @@ drugSuite('voren_supp', () => {
 
 // ---------------------------------------------------------------- 感冒／呼吸道
 for (const [id, mlPerKgDay, src] of [
-  ['peace_syrup', 0.6, '高醫速算表'],
-  ['cypromin_syrup', 0.6, '高醫速算表'],
   ['soltan_syrup', 0.6, '高醫速算表'],
   ['secorine_syrup', 1, '高醫速算表'],
   ['glyo_syrup', 1, '高醫速算表']
@@ -187,9 +185,9 @@ drugSuite('cypromin_tab', () => {
     range(r.mgRange, [16 / 3, 16 / 3], 'mg');
     range(r.unitRange, [4 / 3, 4 / 3], 'tab');
   });
-  test('同成分糖漿（cypromin_syrup）在 100 kg 換算 8 mg/dose = 24 mg/day，超過錠劑的 16 mg/day 上限（列入報告）', () => {
-    const syrupMl = dose('cypromin_syrup', 100).mlRange[0];
-    close(syrupMl * drug('cypromin_syrup').concentration_mg_per_ml * 3, 24, '糖漿 mg/day');
+  test('同成分糖漿（cypromin_syrup）≥ 7 歲 100 kg 也封頂在 16 mg/day，與錠劑一致', () => {
+    const syrupMl = dose('cypromin_syrup', 100, 10).mlRange[0];
+    close(syrupMl * drug('cypromin_syrup').concentration_mg_per_ml * 3, 16, '糖漿 mg/day');
   });
 });
 
@@ -930,6 +928,74 @@ drugSuite('adenosine', () => {
     range(dose('adenosine', 60, undefined, 1).mgRange, [12, 12], '60 kg 2nd');
     range(dose('adenosine', 80, undefined, 0).mlRange, [2, 2], '80 kg 1st');
     range(dose('adenosine', 80, undefined, 1).mlRange, [4, 4], '80 kg 2nd');
+  });
+});
+
+// ---------------------------------------------------------------- Peace、Cypromin 糖漿（Kiwi 2026-11-05 指定上限）
+drugSuite('peace_syrup', () => {
+  test('出處範例 [JSON 高醫速算表] 10 kg：0.6 mL/kg/day ÷ 3 → 2 mL/dose；3 kg → 0.6 mL', () => {
+    range(dose('peace_syrup', 10).mlRange, [2, 2], '10 kg');
+    range(dose('peace_syrup', 3).mlRange, [0.6, 0.6], '3 kg');
+  });
+  // 上限出處：Actifed 糖漿仿單（NAFDAC 2022，同濃度 triprolidine 0.25 + pseudoephedrine 6 mg/mL）：成人及 ≥ 12 歲 10 mL/次
+  test('單次上限 10 mL：50 kg 剛好 10 mL（未標封頂）；60 kg、120 kg 封頂 10 mL 並標 capped', () => {
+    const at50 = dose('peace_syrup', 50);
+    range(at50.mlRange, [10, 10], '50 kg');
+    assert.equal(at50.capped, undefined);
+    for (const w of [60, 120]) {
+      const r = dose('peace_syrup', w);
+      range(r.mlRange, [10, 10], `${w} kg`);
+      assert.equal(r.capped, true);
+    }
+  });
+  test('不需要年齡；mL/kg 型不換算 mg', () => {
+    range(dose('peace_syrup', 20, null).mlRange, [4, 4], '無年齡');
+    assert.equal(dose('peace_syrup', 20).mgRange, undefined);
+  });
+});
+
+drugSuite('cypromin_syrup', () => {
+  // 上限出處：美國仿單 cyproheptadine oral solution 2 mg/5 mL（DailyMed，與 Cypromin 0.4 mg/mL 同濃度）
+  //   2-6 歲每日 ≤ 12 mg；7-14 歲每日 ≤ 16 mg；每日約 0.25 mg/kg；< 2 歲安全性未確立
+  test('出處範例 [DailyMed] 每日約 0.25 mg/kg：4 歲 16 kg → 0.6 mL/kg/day ÷ 3 = 3.2 mL/dose（= 0.24 mg/kg/day）', () => {
+    const r = dose('cypromin_syrup', 16, 4);
+    range(r.mlRange, [3.2, 3.2], 'mL');
+    close(r.mlRange[0] * 3 * 0.4 / 16, 0.24, 'mg/kg/day');
+  });
+  test('3 kg、1 歲 → 0.6 mL', () => {
+    range(dose('cypromin_syrup', 3, 1).mlRange, [0.6, 0.6], '3 kg');
+  });
+  test('[DailyMed] < 7 歲每日 12 mg = 30 mL → 單次 10 mL：5 歲 50 kg 剛好 10 mL；60 kg 封頂 10 mL', () => {
+    const at50 = dose('cypromin_syrup', 50, 5);
+    range(at50.mlRange, [10, 10], '50 kg');
+    assert.equal(at50.capped, undefined);
+    const r = dose('cypromin_syrup', 60, 5);
+    range(r.mlRange, [10, 10], '60 kg');
+    assert.equal(r.capped, true);
+  });
+  test('[DailyMed] ≥ 7 歲每日 16 mg = 40 mL → 單次 13.33 mL：10 歲 80 kg、16 歲 120 kg 封頂', () => {
+    range(dose('cypromin_syrup', 80, 10).mlRange, [40 / 3, 40 / 3], '80 kg');
+    range(dose('cypromin_syrup', 120, 16).mlRange, [40 / 3, 40 / 3], '120 kg');
+  });
+  test('年齡切換點：6.99 歲用 12 mg、7 歲用 16 mg（70 kg）', () => {
+    range(dose('cypromin_syrup', 70, 6.99).mlRange, [10, 10], '6.99 歲');
+    range(dose('cypromin_syrup', 70, 7).mlRange, [40 / 3, 40 / 3], '7 歲');
+  });
+  test('需要年齡：缺年齡 → needs_age；年齡 -1、19 → invalid_age；缺體重先要求體重', () => {
+    assert.deepEqual(dose('cypromin_syrup', 16, null), { needs_age: true });
+    assert.deepEqual(dose('cypromin_syrup', 16, -1), { invalid_age: true });
+    assert.deepEqual(dose('cypromin_syrup', 16, 19), { invalid_age: true });
+    assert.deepEqual(dose('cypromin_syrup', null, 4), { needs_weight: true });
+  });
+  test('[DailyMed] < 2 歲「不建議」', () => {
+    const c = drug('cypromin_syrup').contraindications[0];
+    assert.deepEqual([c.type, c.threshold_years, c.severity], ['age_below_years', 2, '不建議']);
+  });
+  test('糖漿不再超過錠劑的 16 mg/day：0.5-120 kg × 2-18 歲', () => {
+    for (let w = 0.5; w <= 120; w += 0.5) for (const a of [2, 4, 6.9, 7, 10, 14, 18]) {
+      const r = dose('cypromin_syrup', w, a);
+      assert.ok(r.mlRange[1] * 3 * 0.4 <= 16 + 1e-9, `${w} kg ${a} 歲`);
+    }
   });
 });
 

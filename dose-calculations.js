@@ -168,11 +168,35 @@
       if (weight == null) return { needs_weight: true };
       if (!validWeight(weight)) return { invalid_weight: true };
       const dosesDay = calc.doses_per_day || 1;
-      return {
-        type: 'dose',
-        mlRange: [(calc.low * weight) / dosesDay, (calc.high * weight) / dosesDay],
-        rule: `${calc.low}${calc.high !== calc.low ? '-' + calc.high : ''} mL/kg/day ÷ ${dosesDay}`
-      };
+      let lowMlDay = calc.low * weight;
+      let highMlDay = calc.high * weight;
+      let rule = `${calc.low}${calc.high !== calc.low ? '-' + calc.high : ''} mL/kg/day ÷ ${dosesDay}`;
+      let capped = false;
+      // 依年齡的每日 mg 上限（如 Cypromin 糖漿 < 7 歲 12 mg/day、≥ 7 歲 16 mg/day），需要年齡與濃度
+      if (calc.daily_max_mg_by_age) {
+        if (age == null) return { needs_age: true };
+        if (!validAgeYears(age)) return { invalid_age: true };
+        const band = calc.daily_max_mg_by_age.find(b => age >= b.age_low && age < b.age_high);
+        const conc = drug.concentration_mg_per_ml;
+        if (band && conc > 0) {
+          const maxMlDay = band.max_mg_per_day / conc;
+          if (highMlDay > maxMlDay) capped = true;
+          lowMlDay = Math.min(lowMlDay, maxMlDay);
+          highMlDay = Math.min(highMlDay, maxMlDay);
+          rule += `（${band.label} 每日上限 ${band.max_mg_per_day} mg）`;
+        }
+      }
+      let lowMl = lowMlDay / dosesDay;
+      let highMl = highMlDay / dosesDay;
+      if (calc.max_ml_per_dose) {
+        if (highMl > calc.max_ml_per_dose) capped = true;
+        lowMl = Math.min(lowMl, calc.max_ml_per_dose);
+        highMl = Math.min(highMl, calc.max_ml_per_dose);
+        rule += `（單次上限 ${calc.max_ml_per_dose} mL）`;
+      }
+      const result = { type: 'dose', mlRange: [lowMl, highMl], rule };
+      if (capped) result.capped = true;
+      return result;
     }
 
     if (t === 'supp_by_weight') {
